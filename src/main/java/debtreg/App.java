@@ -8,6 +8,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 
+
+//TODO: Zymėti paskolintus arba pasiskolintus pinigus.
+
 @SpringBootApplication
 public class App {
     public static void main(String[] args) {

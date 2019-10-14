@@ -1,6 +1,14 @@
 package debtreg.Entities;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+
+@Entity
 public class Debt {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
     private long moneysum;
     private User getter;
@@ -44,7 +52,4 @@ public class Debt {
     public void setGiver(User giver) {
         this.giver = giver;
     }
-
-    
-    
 }
