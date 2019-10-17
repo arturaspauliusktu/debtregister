@@ -6,23 +6,39 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
+@Table(name = "messages")
 public class Message {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
+    @NotNull
+    @Size( max = 300)
     private String text;
     private Date date;
-    private User getter;
-    private User giver;
+    @ManyToOne
+    @JoinColumn( name = "debt_getter_id", unique = false, nullable = false)
+    @JsonIgnore
+    private User debt_getter;
+    @ManyToOne
+    @JoinColumn( name = "debt_giver_id", unique = false, nullable = false)
+    @JsonIgnore
+    private User debt_giver;
 
-    public Message(long id, String text, Date date, User getter, User giver) {
+    public Message(long id, String text, Date date, User debt_getter, User debt_giver) {
         this.id = id;
         this.text = text;
         this.date = date;
-        this.getter = getter;
-        this.giver = giver;
+        this.debt_getter = debt_getter;
+        this.debt_giver = debt_giver;
     }
 
     public long getId() {
@@ -50,19 +66,19 @@ public class Message {
     }
 
     public User getGetter() {
-        return getter;
+        return debt_getter;
     }
 
-    public void setGetter(User getter) {
-        this.getter = getter;
+    public void setGetter(User debt_getter) {
+        this.debt_getter = debt_getter;
     }
 
     public User getGiver() {
-        return giver;
+        return debt_giver;
     }
 
-    public void setGiver(User giver) {
-        this.giver = giver;
+    public void setGiver(User debt_giver) {
+        this.debt_giver = debt_giver;
     }
     
 }

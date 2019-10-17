@@ -1,24 +1,48 @@
 package debtreg.Entities;
 
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
+
+import org.springframework.lang.Nullable;
 
 @Entity
+@Table(name = "debts")
 public class Debt {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
     private long moneysum;
-    private User getter;
-    private User giver;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "debt_giver_id", nullable = true)
+    private User debt_giver;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "debt_getter_id", nullable = true)
+    private User debt_getter;
+    @OneToOne
+    @Nullable
+    private Deposite deposite;
 
-    public Debt(long id, long moneysum, User getter, User giver) {
+    public Debt(){
+        this.id = 0;
+        this.moneysum = 0;
+        this.debt_getter = null;
+        this.debt_giver = null;
+        this.deposite = null;
+    }
+
+    public Debt(long id, long moneysum, User getter, User giver, Deposite deposite) {
         this.id = id;
         this.moneysum = moneysum;
-        this.getter = getter;
-        this.giver = giver;
+        this.debt_getter = getter;
+        this.debt_giver = giver;
+        this.deposite =deposite;
     }
 
     public long getId() {
@@ -38,18 +62,26 @@ public class Debt {
     }
 
     public User getGetter() {
-        return getter;
+        return debt_getter;
     }
 
     public void setGetter(User getter) {
-        this.getter = getter;
+        this.debt_getter = getter;
     }
 
     public User getGiver() {
-        return giver;
+        return debt_giver;
     }
 
     public void setGiver(User giver) {
-        this.giver = giver;
+        this.debt_giver = giver;
+    }
+
+    public Deposite getDeposite(){
+        return this.deposite;
+    }
+
+    public void setDeposite(Deposite deposite){
+        this.deposite = deposite;
     }
 }

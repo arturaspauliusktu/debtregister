@@ -1,41 +1,44 @@
 package debtreg.Entities;
 
 import java.util.Date;
-import java.util.List;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 @Entity
+@Table(name = "users")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
+    @NotNull
+    @Size( max = 100 )
+    @Column(unique = true)
     private String username;
+    @NotNull
+    @Size( max = 100 )
+    @Column(unique = true)
     private String password;
     private Date registration;
-    private List<Debt> debts;
-    private List<Message> messages;
 
     public User(){
         id = 0;
         username = "";
         password = "";
         registration = null;
-        debts = null;
-        messages = null;
     }
 
-    public User(long id, String username, String password, Date registration, List<Debt> debts,
-            List<Message> messages) {
+    public User(long id, String username, String password, Date registration) {
         this.id = id;
         this.username = username;
         this.password = password;
         this.registration = registration;
-        this.debts = debts;
-        this.messages = messages;
     }
 
     public long getId() {
@@ -69,38 +72,4 @@ public class User {
     public void setRegistration(Date registration) {
         this.registration = registration;
     }
-
-    public List<Debt> getDebts() {
-        return debts;
-    }
-
-    public void setDebts(List<Debt> debts) {
-        this.debts = debts;
-    }
-
-    public List<Message> getMessages() {
-        return messages;
-    }
-
-    public void setMessages(List<Message> messages) {
-        this.messages = messages;
-    }
-    
-    // public void addMessage(Message message){
-    //     try {
-    //         this.messages.add(message);
-    //     } catch (Exception e) {
-    //         System.out.println(e.getMessage());
-    //     }
-    // }
-
-    // public void removeMessage(Message message){
-    //     try {
-    //         this.messages.remove(message);
-    //     } catch (Exception e) {
-    //         System.out.println(e.getMessage());
-    //     }
-    // }
-
-
 }
