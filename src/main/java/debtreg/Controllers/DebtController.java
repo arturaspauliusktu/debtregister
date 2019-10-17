@@ -61,7 +61,7 @@ public class DebtController {
                responHeaders.setLocation(location);
                return new ResponseEntity<Object>("Could Not delete debt", responHeaders, HttpStatus.INTERNAL_SERVER_ERROR);
           }
-          return new ResponseEntity<Object>(HttpStatus.OK);
+          return new ResponseEntity<Object>(HttpStatus.NO_CONTENT);
      }
 
      @PatchMapping("/debt/{id}")
@@ -73,6 +73,6 @@ public class DebtController {
           if(requestDebt.getMoneysum() != 0 ) debt.setMoneysum(requestDebt.getMoneysum());
           if(requestDebt.getGetter() != null) debt.setGetter(requestDebt.getGetter());
           if(requestDebt.getGiver() != null) debt.setGiver(requestDebt.getGiver());
-          return new ResponseEntity<Object>(HttpStatus.OK);
+          return new ResponseEntity<Object>(HttpStatus.NO_CONTENT);
      }
 }
