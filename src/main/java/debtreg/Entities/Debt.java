@@ -10,6 +10,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import org.springframework.lang.Nullable;
 
 @Entity
@@ -20,9 +22,11 @@ public class Debt {
     private long id;
     private long moneysum;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "debt_giver_id", nullable = true)
+    @JsonIgnore
+    @JoinColumn(name = "debtGiverId", nullable = true)
     private User debt_giver;
     @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
     @JoinColumn(name = "debt_getter_id", nullable = true)
     private User debt_getter;
     @OneToOne

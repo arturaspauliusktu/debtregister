@@ -4,4 +4,6 @@ import org.springframework.data.repository.CrudRepository;
 
 import debtreg.Entities.Message;
 
-public interface MessageRepository extends CrudRepository<Message, Integer> {}
+public interface MessageRepository extends CrudRepository<Message, Integer> {
+    
+}
