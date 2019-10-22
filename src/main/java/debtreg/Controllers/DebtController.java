@@ -65,35 +65,12 @@ public class DebtController {
           return debtrepo.findByDebtGiverId(userId, pageable);
      }
 
-     @PostMapping("/debt")
-     public ResponseEntity<Object> addDebt(@RequestBody Debt requestdebt){
-          //requestdebt.setId(counter.incrementAndGet());
-          Debt savedDebt = debtrepo.save(requestdebt);
-          URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-          .path("/{id}").buildAndExpand(savedDebt.getId()).toUri();
-          return ResponseEntity.created(location).build();
-     }
-
      @PostMapping("/user/{userId}/debt")
      public Debt addDebtToUser(@PathVariable Long userId, @RequestBody Debt requestdebt) {
            return userrepo.findById(userId).map( user -> {
                requestdebt.setGiver(user);
                return debtrepo.save(requestdebt);
            }).orElseThrow(() -> new ResourceNotFoundException("User id - " + userId + "Not Found!"));
-     }
-     
-     @DeleteMapping("/debt/{id}")
-     public ResponseEntity<Object> removeDebt(@PathVariable Long id){
-          debtrepo.deleteById(id);
-          Optional<Debt> debt = debtrepo.findById(id);
-          if(debt.isPresent()){
-               URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-               .path("/{id}").buildAndExpand(debt.get().getId()).toUri();
-               HttpHeaders responHeaders = new HttpHeaders();
-               responHeaders.setLocation(location);
-               return new ResponseEntity<Object>("Could Not delete debt", responHeaders, HttpStatus.INTERNAL_SERVER_ERROR);
-          }
-          return new ResponseEntity<Object>(HttpStatus.NO_CONTENT);
      }
 
      @DeleteMapping("/user/{userId}/debt/{debtId}")
