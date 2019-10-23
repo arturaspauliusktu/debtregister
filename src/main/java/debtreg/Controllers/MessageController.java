@@ -59,20 +59,30 @@ public class MessageController {
           return new ResponseEntity<Object>(HttpStatus.NO_CONTENT);
      }
 
-     @GetMapping("/user/{userId}/messages")
-     public Page<Message> getAllMessagessByUserId(@PathVariable(name = "userId") Long userId,
+     @GetMapping("/giver/{userId}/messages")
+     public Page<Message> getAllMessagessByGiverId(@PathVariable(name = "userId") Long userId,
       Pageable pageable){
-          Page<Message> giverd = messagerepo.findAllByMessageGetterId(userId, pageable);
-          Page<Message> getterd = messagerepo.findAllByMessageGetterId(userId, pageable);
-          if(giverd.getSize() != 0) return giverd;
-          if(getterd.getSize() != 0) return getterd;
-          return getterd;
+          return messagerepo.findAllByMessageGiverId(userId, pageable);
      }
 
-     @PostMapping("/user/{userId}/message")
-     public Message addMessageToUser(@PathVariable Long userId, @RequestBody Message requestmessage) {
+     @GetMapping("/getter/{userId}/messages")
+     public Page<Message> getAllMessagessByUserId(@PathVariable(name = "userId") Long userId,
+      Pageable pageable){
+          return messagerepo.findAllByMessageGetterId(userId, pageable);
+     }
+
+     @PostMapping("/giver/{userId}/message")
+     public Message addMessageToGiver(@PathVariable Long userId, @RequestBody Message requestmessage) {
            return userrepo.findById(userId).map( user -> {
                requestmessage.setGiver(user);
+               return messagerepo.save(requestmessage);
+           }).orElseThrow(() -> new ResourceNotFoundException("User id - " + userId + "Not Found!"));
+     }
+
+     @PostMapping("/getter/{userId}/message")
+     public Message addMessageToGetter(@PathVariable Long userId, @RequestBody Message requestmessage) {
+           return userrepo.findById(userId).map( user -> {
+               requestmessage.setGetter(user);
                return messagerepo.save(requestmessage);
            }).orElseThrow(() -> new ResourceNotFoundException("User id - " + userId + "Not Found!"));
      }
@@ -82,11 +92,11 @@ public class MessageController {
           return messagerepo.findByIdAndMessageGiverId(messageId, userId).map( message -> {
                messagerepo.delete(message);
                return ResponseEntity.ok().build();
-          }).orElseThrow(() -> new ResourceNotFoundException("Message Not Found Whit userId Of " + userId + "and messageId " + messageId ));
+          }).orElseThrow(() -> new ResourceNotFoundException("Message Not Found Whit userId Of " + userId + "and debtId " + messageId ));
      }
 
      @PutMapping("/user/{userId}/message/{messageId}")
-     public Message updateMessage(@PathVariable Long userId,
+     public Message updateM(@PathVariable Long userId,
      @PathVariable Long messageId,
      @RequestBody Message messagerequest){
           if(!userrepo.existsById(userId)){

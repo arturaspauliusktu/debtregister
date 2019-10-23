@@ -1,7 +1,9 @@
 package debtreg.Repositories;
 
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import debtreg.Entities.Deposite;
 
-public interface DepositeRepository extends CrudRepository<Deposite, Integer> {}
+@Repository
+public interface DepositeRepository extends JpaRepository<Deposite, Long> {}

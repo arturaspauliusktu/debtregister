@@ -58,24 +58,34 @@ public class DebtController {
      @GetMapping("/user/{userId}/debts")
      public Page<Debt> getAllDebtsByUserId(@PathVariable(name = "userId") Long userId,
       Pageable pageable){
-          Page<Debt> giverd = debtrepo.findByDebtGiverId(userId, pageable);
-          Page<Debt> getterd = debtrepo.findByDebtGetterId(userId, pageable);
-          if (giverd.getSize() != 0) return giverd;
-          if (getterd.getSize() != 0) return getterd;
-          return giverd;
+          return debtrepo.findByDebtGetterId(userId, pageable);
      }
 
-     @PostMapping("/user/{userId}/debt")
-     public Debt addDebtToUser(@PathVariable Long userId, @RequestBody Debt requestdebt) {
+     @GetMapping("/user/{userId}/assets")
+     public Page<Debt> getAllAssetsByUserId(@PathVariable(name = "userId") Long userId,
+      Pageable pageable){
+          return debtrepo.findByDebtGiverId(userId, pageable);
+     }
+
+     @PostMapping("/giver/{userId}/debt")
+     public Debt addDebtToGiver(@PathVariable Long userId, @RequestBody Debt requestdebt) {
            return userrepo.findById(userId).map( user -> {
                requestdebt.setGiver(user);
                return debtrepo.save(requestdebt);
            }).orElseThrow(() -> new ResourceNotFoundException("User id - " + userId + "Not Found!"));
      }
 
+     @PostMapping("/getter/{userId}/debt")
+     public Debt addDebtToGetter(@PathVariable Long userId, @RequestBody Debt requestdebt) {
+           return userrepo.findById(userId).map( user -> {
+               requestdebt.setGetter(user);
+               return debtrepo.save(requestdebt);
+           }).orElseThrow(() -> new ResourceNotFoundException("User id - " + userId + "Not Found!"));
+     }
+
      @DeleteMapping("/user/{userId}/debt/{debtId}")
      public ResponseEntity<?> deleteUserDebt(@PathVariable Long userId, @PathVariable Long debtId){
-          return debtrepo.findByIdAndDebtGiverId(debtId, userId).map( debt -> {
+          return debtrepo.findByIdAndDebtUserId(debtId, userId).map( debt -> {
                debtrepo.delete(debt);
                return ResponseEntity.ok().build();
           }).orElseThrow(() -> new ResourceNotFoundException("Debt Not Found Whit userId Of " + userId + "and debtId " + debtId ));

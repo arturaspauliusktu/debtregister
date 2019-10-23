@@ -18,46 +18,74 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import debtreg.Entities.Deposite;
+import debtreg.Exceptions.ResourceNotFoundException;
+import debtreg.Repositories.DebtRepository;
 import debtreg.Repositories.DepositeRepository;
 
 @RestController
 public class DepositeController {
     @Autowired
-    DepositeRepository repo;
+    DepositeRepository depositerepo;
+
+    @Autowired
+    DebtRepository debtrepo;
 
     @GetMapping("/deposites")
     public List<Deposite> getDeposites(){
-        return (List<Deposite>) repo.findAll();
+        return (List<Deposite>) depositerepo.findAll();
     }
 
     @GetMapping("/deposite/{id}")
-    public Deposite getDeposite(@PathVariable Integer id) throws Exception{
-        Optional<Deposite> optionalDeposite = repo.findById(id);
+    public Deposite getDeposite(@PathVariable Long id) throws Exception{
+        Optional<Deposite> optionalDeposite = depositerepo.findById(id);
         if (!optionalDeposite.isPresent()) throw new Exception("Deposite Not Found with id : " + id);
         return optionalDeposite.get();
     }
 
+    @GetMapping("/debt/{id}/deposite")
+    public Deposite getDepositeByDebtId(@PathVariable Long id) throws Exception{
+        Optional<Deposite> optionalDeposite = depositerepo.findById(id);
+        if (!optionalDeposite.isPresent()) throw new Exception("Deposite Not Found with id : " + id);
+        return optionalDeposite.get();
+    }
+
+    @PostMapping("/debt/{id}/deposite")
+    public Deposite createDeposite(@PathVariable Long id, @RequestBody Deposite deposite){
+           return debtrepo.findById(id).map( debt -> {
+               deposite.setDebt(debt);
+               return depositerepo.save(deposite);
+           }).orElseThrow(() -> new ResourceNotFoundException("debt id - " + id + "Not Found!"));
+    }
+
     @PostMapping("/deposite")
     public ResponseEntity<Object> createDeposite(@RequestBody Deposite deposite){
-        Deposite savedDeposite = repo.save(deposite);
+        Deposite savedDeposite = depositerepo.save(deposite);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
         .path("/{id}").buildAndExpand(savedDeposite.getId()).toUri();
         return ResponseEntity.created(location).build();
     }
 
     @DeleteMapping("/deposite/{id}")
-    public ResponseEntity<Object> deleteDeposite(@PathVariable Integer id) throws Exception{
-        Optional<Deposite> optionalDeposite = repo.findById(id);
+    public ResponseEntity<Object> deleteDeposite(@PathVariable Long id) throws Exception{
+        Optional<Deposite> optionalDeposite = depositerepo.findById(id);
         if (!optionalDeposite.isPresent()) throw new Exception("Deposite not found with id : "+ id);
-        repo.deleteById(id);
+        depositerepo.deleteById(id);
         return new ResponseEntity<Object>(HttpStatus.OK);
     }
 
+    @DeleteMapping("/dept/{id}/deposite")
+    public ResponseEntity<?> deleteDebtDeposite(@PathVariable Long id){
+        return debtrepo.findById(id).map( debt -> {
+            debtrepo.delete(debt);
+            return ResponseEntity.ok().build();
+        }).orElseThrow(() -> new ResourceNotFoundException("Debt Not Found Whit userId Of " + id ));
+    }
+
     @PatchMapping("/deposite/{id}")
-    public ResponseEntity<Object> updateDeposite(@PathVariable Integer id, @RequestBody Deposite deposite){
-        Optional<Deposite> optDeposite = repo.findById(id);
+    public ResponseEntity<Object> updateDeposite(@PathVariable Long id, @RequestBody Deposite deposite){
+        Optional<Deposite> optDeposite = depositerepo.findById(id);
         if(!optDeposite.isPresent()) {
-            repo.save(deposite);
+            depositerepo.save(deposite);
             URI location = ServletUriComponentsBuilder.fromCurrentRequest()
             .path("/{id}").buildAndExpand(deposite.getId()).toUri();
             return ResponseEntity.created(location).build();
@@ -66,15 +94,15 @@ public class DepositeController {
         optDeposite.get().setDebt(deposite.getDebt());
         optDeposite.get().setDescription(deposite.getDescription());
         optDeposite.get().setName(deposite.getName());
-        repo.save(optDeposite.get());
+        depositerepo.save(optDeposite.get());
         return new ResponseEntity<Object>(HttpStatus.NO_CONTENT);
     }
 
     @PutMapping("/deposite/{id}")
-    public ResponseEntity<Object> putDeposite(@PathVariable Integer id, @RequestBody Deposite deposite){
-        Optional<Deposite> optDeposite = repo.findById(id);
+    public ResponseEntity<Object> putDeposite(@PathVariable Long id, @RequestBody Deposite deposite){
+        Optional<Deposite> optDeposite = depositerepo.findById(id);
         if(!optDeposite.isPresent()) {
-            repo.save(deposite);
+            depositerepo.save(deposite);
             URI location = ServletUriComponentsBuilder.fromCurrentRequest()
             .path("/{id}").buildAndExpand(deposite.getId()).toUri();
             return ResponseEntity.created(location).build();
@@ -83,7 +111,7 @@ public class DepositeController {
         optDeposite.get().setDebt(deposite.getDebt());
         optDeposite.get().setDescription(deposite.getDescription());
         optDeposite.get().setName(deposite.getName());
-        repo.save(optDeposite.get());
+        depositerepo.save(optDeposite.get());
         return new ResponseEntity<Object>(HttpStatus.NO_CONTENT);
     }
 }

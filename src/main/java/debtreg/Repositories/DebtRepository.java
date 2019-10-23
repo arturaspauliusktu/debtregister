@@ -21,4 +21,6 @@ public interface DebtRepository extends JpaRepository<Debt, Long>{
     Page<Debt> findByDebtGetterId(@Param("user_id") Long userId, Pageable pageable);
     @Query(value = "select d from Debt d where d.debt_getter.id = :user_id and d.id = :debt_id ")
     Optional<Debt> findByIdAndDebtGetterId(@Param("debt_id") Long id,@Param("user_id") Long userId);
+    @Query(value = "select d from Debt d where d.debt_getter.id = :user_id and d.id = :debt_id or d.debt_giver.id = :user_id and d.id = :debt_id")
+    Optional<Debt> findByIdAndDebtUserId(@Param("debt_id") Long id,@Param("user_id") Long userId);
 }
