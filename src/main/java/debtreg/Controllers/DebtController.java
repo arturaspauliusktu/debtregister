@@ -1,6 +1,5 @@
 package debtreg.Controllers;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 //import java.util.concurrent.atomic.AtomicLong;
@@ -8,7 +7,6 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,8 +17,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-//import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import debtreg.Entities.Debt;
 import debtreg.Exceptions.ResourceNotFoundException;
@@ -59,10 +55,14 @@ public class DebtController {
           return debt.get();
      }
 
-     @GetMapping("/user/{userId}/debt")
+     @GetMapping("/user/{userId}/debts")
      public Page<Debt> getAllDebtsByUserId(@PathVariable(name = "userId") Long userId,
       Pageable pageable){
-          return debtrepo.findByDebtGiverId(userId, pageable);
+          Page<Debt> giverd = debtrepo.findByDebtGiverId(userId, pageable);
+          Page<Debt> getterd = debtrepo.findByDebtGetterId(userId, pageable);
+          if (giverd.getSize() != 0) return giverd;
+          if (getterd.getSize() != 0) return getterd;
+          return giverd;
      }
 
      @PostMapping("/user/{userId}/debt")

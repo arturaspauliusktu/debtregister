@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import debtreg.Entities.Debt;
 import debtreg.Entities.Message;
 import debtreg.Exceptions.ResourceNotFoundException;
 import debtreg.Repositories.MessageRepository;
@@ -35,19 +34,19 @@ public class MessageController {
      private UserRepository userrepo;
 
      @GetMapping("/messages")
-     public List<Message> getDebts(){
+     public List<Message> getMessages(){
           return (List<Message>) messagerepo.findAll();
      }
 
      @GetMapping("/message/{id}")
-     public Message getDebt(@PathVariable Long id) throws Exception {
+     public Message getMessage(@PathVariable Long id) throws Exception {
           Optional<Message> message = messagerepo.findById(id);
           if(!message.isPresent()) throw new Exception("Message not found! id-"+id);
           return message.get();
      }
      
      @DeleteMapping("/message/{id}")
-     public ResponseEntity<Object> removeDebt(@PathVariable Long id){
+     public ResponseEntity<Object> removeMessage(@PathVariable Long id){
           messagerepo.deleteById(id);
           Optional<Message> message = messagerepo.findById(id);
           if(message.isPresent()){
@@ -60,67 +59,60 @@ public class MessageController {
           return new ResponseEntity<Object>(HttpStatus.NO_CONTENT);
      }
 
-     @PatchMapping("/message/{id}")
-     public ResponseEntity<Object> updateDebt(@RequestBody Message requestMessage, @PathVariable Long id) throws Exception{
-          Optional<Message> optionalDebt = messagerepo.findById(id);
-          if(!optionalDebt.isPresent()) throw new Exception("Message Not Found with id = "+ id);
-          Message message = optionalDebt.get();
-          if(requestMessage.getId() != 0) message.setId(requestMessage.getId());
-          if(requestMessage.getDate() != null ) message.setDate(requestMessage.getDate());
-          if(requestMessage.getGetter() != null) message.setGetter(requestMessage.getGetter());
-          if(requestMessage.getGiver() != null) message.setGiver(requestMessage.getGiver());
-          if(requestMessage.getText() != null) message.setText(requestMessage.getText());
-          return new ResponseEntity<Object>(HttpStatus.NO_CONTENT);
+     @GetMapping("/user/{userId}/messages")
+     public Page<Message> getAllMessagessByUserId(@PathVariable(name = "userId") Long userId,
+      Pageable pageable){
+          Page<Message> giverd = messagerepo.findAllByMessageGetterId(userId, pageable);
+          Page<Message> getterd = messagerepo.findAllByMessageGetterId(userId, pageable);
+          if(giverd.getSize() != 0) return giverd;
+          if(getterd.getSize() != 0) return getterd;
+          return getterd;
      }
 
-     // @GetMapping("/user/{userId}/messages")
-     // public Page<Debt> getAllDebtsByUserId(@PathVariable(name = "userId") Long userId,
-     //  Pageable pageable){
-     //      return messagerepo.findByDebtGiverId(userId, pageable);
-     // }
+     @PostMapping("/user/{userId}/message")
+     public Message addMessageToUser(@PathVariable Long userId, @RequestBody Message requestmessage) {
+           return userrepo.findById(userId).map( user -> {
+               requestmessage.setGiver(user);
+               return messagerepo.save(requestmessage);
+           }).orElseThrow(() -> new ResourceNotFoundException("User id - " + userId + "Not Found!"));
+     }
 
-     // @PostMapping("/user/{userId}/debt")
-     // public Debt addDebtToUser(@PathVariable Long userId, @RequestBody Debt requestdebt) {
-     //       return userrepo.findById(userId).map( user -> {
-     //           requestdebt.setGiver(user);
-     //           return debtrepo.save(requestdebt);
-     //       }).orElseThrow(() -> new ResourceNotFoundException("User id - " + userId + "Not Found!"));
-     // }
+     @DeleteMapping("/user/{userId}/message/{messageId}")
+     public ResponseEntity<?> deleteUserMessage(@PathVariable Long userId, @PathVariable Long messageId){
+          return messagerepo.findByIdAndMessageGiverId(messageId, userId).map( message -> {
+               messagerepo.delete(message);
+               return ResponseEntity.ok().build();
+          }).orElseThrow(() -> new ResourceNotFoundException("Message Not Found Whit userId Of " + userId + "and messageId " + messageId ));
+     }
 
-     // @DeleteMapping("/user/{userId}/debt/{debtId}")
-     // public ResponseEntity<?> deleteUserDebt(@PathVariable Long userId, @PathVariable Long debtId){
-     //      return debtrepo.findByIdAndDebtGiverId(debtId, userId).map( debt -> {
-     //           debtrepo.delete(debt);
-     //           return ResponseEntity.ok().build();
-     //      }).orElseThrow(() -> new ResourceNotFoundException("Debt Not Found Whit userId Of " + userId + "and debtId " + debtId ));
-     // }
+     @PutMapping("/user/{userId}/message/{messageId}")
+     public Message updateMessage(@PathVariable Long userId,
+     @PathVariable Long messageId,
+     @RequestBody Message messagerequest){
+          if(!userrepo.existsById(userId)){
+               throw new ResourceNotFoundException("userId " + userId + "Not Found!");
+          }
 
-     // @PutMapping("/user/{userId}/debt/{debtId}")
-     // public Debt updateDebt(@PathVariable Long userId,
-     // @PathVariable Long debtId,
-     // @RequestBody Debt debtrequest){
-     //      if(!userrepo.existsById(userId)){
-     //           throw new ResourceNotFoundException("userId " + userId + "Not Found!");
-     //      }
+          return messagerepo.findById(userId).map( message -> {
+               if(messagerequest.getId() != 0) message.setId(messagerequest.getId());
+               if(messagerequest.getText() != null ) message.setText(messagerequest.getText());
+               if(messagerequest.getGetter() != null) message.setGetter(messagerequest.getGetter());
+               if(messagerequest.getGiver() != null) message.setGiver(messagerequest.getGiver());
+               if(messagerequest.getDate() != null) message.setDate(messagerequest.getDate());
+               return messagerepo.save(message);
+          }).orElseThrow(() -> new ResourceNotFoundException("messageId " + messageId + "Not Found"));
+     }
 
-     //      return debtrepo.findById(userId).map( debt -> {
-     //           if(debtrequest.getId() != 0) debt.setId(debtrequest.getId());
-     //           if(debtrequest.getMoneysum() != 0 ) debt.setMoneysum(debtrequest.getMoneysum());
-     //           if(debtrequest.getGetter() != null) debt.setGetter(debtrequest.getGetter());
-     //           if(debtrequest.getGiver() != null) debt.setGiver(debtrequest.getGiver());
-     //           return debtrepo.save(debt);
-     //      }).orElseThrow(() -> new ResourceNotFoundException("debtId " + debtId + "Not Found"));
-     // }
-
-     // @PatchMapping("/debt/{id}")
-     // public ResponseEntity<Object> updateDebt(@RequestBody Debt requestDebt, @PathVariable Long id) throws Exception{
-     //      Optional<Debt> optionalDebt = debtrepo.findById(id);
-     //      if(!optionalDebt.isPresent()) throw new Exception("Debt Not Found with id = "+ id);
-     //      Debt debt = optionalDebt.get();
-     //      if(requestDebt.getMoneysum() != 0 ) debt.setMoneysum(requestDebt.getMoneysum());
-     //      if(requestDebt.getGetter() != null) debt.setGetter(requestDebt.getGetter());
-     //      if(requestDebt.getGiver() != null) debt.setGiver(requestDebt.getGiver());
-     //      return new ResponseEntity<Object>(HttpStatus.NO_CONTENT);
-     // }
+     @PatchMapping("/message/{id}")
+     public ResponseEntity<Object> updateMessage(@RequestBody Message messagerequest, @PathVariable Long id) throws Exception{
+          Optional<Message> optionalMessage = messagerepo.findById(id);
+          if(!optionalMessage.isPresent()) throw new Exception("Message Not Found with id = "+ id);
+          Message message = optionalMessage.get();
+          if(messagerequest.getText() != null ) message.setText(messagerequest.getText());
+          if(messagerequest.getDate() != null ) message.setDate(messagerequest.getDate());
+          if(messagerequest.getGetter() != null) message.setGetter(messagerequest.getGetter());
+          if(messagerequest.getGiver() != null) message.setGiver(messagerequest.getGiver());
+          return new ResponseEntity<Object>(HttpStatus.NO_CONTENT);
+     }
 
 }

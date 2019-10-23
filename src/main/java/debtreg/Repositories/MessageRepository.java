@@ -12,11 +12,11 @@ import debtreg.Entities.Message;
 
 public interface MessageRepository extends JpaRepository<Message, Long> {
     @Query(value = "select m from Message m where m.debt_giver.id = :user_id")
-    Page<Message> findAllByDebtGiverId(@Param(value = "user_id")Long userId, Pageable pageable);
+    Page<Message> findAllByMessageGiverId(@Param(value = "user_id")Long userId, Pageable pageable);
     @Query(value = "select m from Message m where m.debt_getter.id = :user_id")
-    Page<Message> findAllByDebtGetterId(@Param(value = "user_id") Long userId, Pageable pageable);
+    Page<Message> findAllByMessageGetterId(@Param(value = "user_id") Long userId, Pageable pageable);
     @Query(value = "select m from Message m where m.debt_giver.id = :user_id and m.id = :message_id")
-    Optional<Message> findByIdAndDebtGiverId(@Param(value = "user_id") Long userId, @Param(value = "message_id") Long messageId);
+    Optional<Message> findByIdAndMessageGiverId(@Param(value = "user_id") Long userId, @Param(value = "message_id") Long messageId);
     @Query(value = "select m from Message m where m.debt_getter.id = :user_id and m.id = :message_id")
-    Optional<Message> findByIdAndDebtGetterId(@Param(value = "user_id") Long userId, @Param(value = "message_id") Long messageId);
+    Optional<Message> findByIdAndMessageGetterId(@Param(value = "user_id") Long userId, @Param(value = "message_id") Long messageId);
 }
