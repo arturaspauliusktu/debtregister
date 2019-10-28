@@ -12,6 +12,7 @@ import org.springframework.util.StringUtils;
 
 import debtreg.Entities.AuthProvider;
 import debtreg.Entities.User;
+import debtreg.Entities.UserRole;
 import debtreg.Exceptions.OAuth2AuthenticationProcessingException;
 import debtreg.Repositories.UserRepository;
 import debtreg.Security.UserPrincipal;
@@ -64,7 +65,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     private User registerNewUser(OAuth2UserRequest oAuth2UserRequest, OAuth2UserInfo oAuth2UserInfo) {
-        User user = new User();
+        User user = new User(UserRole.ROLE_USER);
 
         user.setProvider(AuthProvider.valueOf(oAuth2UserRequest.getClientRegistration().getRegistrationId()));
         user.setProviderId(oAuth2UserInfo.getId());

@@ -15,6 +15,8 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
+import org.springframework.security.access.annotation.Secured;
+
 
 @Entity
 @Table(name = "users", uniqueConstraints = {
@@ -42,6 +44,10 @@ public class User {
     @NotNull
     @Enumerated(EnumType.STRING)
     private AuthProvider provider;
+    
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    private UserRole role;
 
     
 
@@ -51,6 +57,15 @@ public class User {
         password = "";
         registration = null;
         imageUrl = "";
+    }
+
+    public User(UserRole role){
+        id = 0;
+        username = "";
+        password = "";
+        registration = null;
+        imageUrl = "";
+        this.role = role;
     }
 
     public User(long id,@NotNull @Size(max = 100) String username,
@@ -134,5 +149,14 @@ public class User {
 
     public void setProvider(AuthProvider provider){
         this.provider = provider;
+    }
+
+    public UserRole getRole(){
+        return this.role;
+    }
+
+    @Secured("ROLE_ADMIN")
+    public void setRole(UserRole role){
+        this.role = role;
     }
 }

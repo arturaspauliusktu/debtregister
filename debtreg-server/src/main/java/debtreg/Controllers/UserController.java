@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -19,7 +19,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import debtreg.Entities.User;
+import debtreg.Exceptions.ResourceNotFoundException;
 import debtreg.Repositories.UserRepository;
+import debtreg.Security.CurrentUser;
+import debtreg.Security.UserPrincipal;
 
 @RestController
 public class UserController {
@@ -38,7 +41,15 @@ public class UserController {
           return user.get();
      }
 
+     @GetMapping("/user/me")
+     //@PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+     public User getCurrentUser(@CurrentUser UserPrincipal userPrincipal) {
+          return repo.findById(userPrincipal.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("User", "id", userPrincipal.getId()));
+     }
+
      @PostMapping("/user")
+     @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")         
      public ResponseEntity<Object> addUser(@RequestBody User requestuser){
           //requestuser.setId(counter.incrementAndGet());
           User savedUser = repo.save(requestuser);
@@ -48,6 +59,7 @@ public class UserController {
      }
      
      @DeleteMapping("/user/{id}")
+     @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")     
      public ResponseEntity<Object> removeUser(@PathVariable Long id){
           repo.deleteById(id);
           Optional<User> user = repo.findById(id);
@@ -62,6 +74,7 @@ public class UserController {
      }
 
      @PatchMapping("/user/{id}")
+     @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")     
      public ResponseEntity<Object> updateUser(@RequestBody User requestUser, @PathVariable Long id) throws Exception{
           Optional<User> optionalUser = repo.findById(id);
           if(!optionalUser.isPresent()) throw new Exception("User Not Found with id = "+ id);

@@ -12,6 +12,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import debtreg.Entities.AuthProvider;
 import debtreg.Entities.User;
+import debtreg.Entities.UserRole;
 import debtreg.Exceptions.BadRequestException;
 import debtreg.Payloads.ApiResponse;
 import debtreg.Payloads.AuthResponse;
@@ -69,6 +70,7 @@ public class AuthController {
         user.setProvider(AuthProvider.local);
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setRole(UserRole.ROLE_USER);
 
         User result = userRepository.save(user);
 

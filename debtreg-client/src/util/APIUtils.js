@@ -49,3 +49,5 @@ export function signup(signupRequest) {
         body: JSON.stringify(signupRequest)
     });
 }
+
+//TODO:add registration date to user signup form

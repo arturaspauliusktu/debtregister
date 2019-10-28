@@ -27,10 +27,12 @@ public class Message {
     @ManyToOne
     @JoinColumn( name = "debt_getter_id", unique = false, nullable = false)
     @JsonIgnore
+    @NotNull
     private User debt_getter;
     @ManyToOne
     @JoinColumn( name = "debt_giver_id", unique = false, nullable = false)
     @JsonIgnore
+    @NotNull
     private User debt_giver;
 
     public Message(long id, String text, Date date, User debt_getter, User debt_giver) {

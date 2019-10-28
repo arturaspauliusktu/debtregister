@@ -21,11 +21,11 @@ public class Debt {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
     private long moneysum;
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JsonIgnore
-    @JoinColumn(name = "debtGiverId", nullable = true)
+    @JoinColumn(name = "debt_giver_id", nullable = true)
     private User debt_giver;
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JsonIgnore
     @JoinColumn(name = "debt_getter_id", nullable = true)
     private User debt_getter;

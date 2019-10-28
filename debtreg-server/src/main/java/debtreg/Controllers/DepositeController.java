@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -30,11 +31,13 @@ public class DepositeController {
     @Autowired
     DebtRepository debtrepo;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/deposites")
     public List<Deposite> getDeposites(){
         return (List<Deposite>) depositerepo.findAll();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/deposite/{id}")
     public Deposite getDeposite(@PathVariable Long id) throws Exception{
         Optional<Deposite> optionalDeposite = depositerepo.findById(id);
@@ -42,6 +45,7 @@ public class DepositeController {
         return optionalDeposite.get();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/debt/{id}/deposite")
     public Deposite getDepositeByDebtId(@PathVariable Long id) throws Exception{
         Optional<Deposite> optionalDeposite = depositerepo.findById(id);
@@ -49,6 +53,7 @@ public class DepositeController {
         return optionalDeposite.get();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/debt/{id}/deposite")
     public Deposite createDeposite(@PathVariable Long id, @RequestBody Deposite deposite){
            return debtrepo.findById(id).map( debt -> {
@@ -57,6 +62,7 @@ public class DepositeController {
            }).orElseThrow(() -> new ResourceNotFoundException("debt id - " + id + "Not Found!"));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/deposite")
     public ResponseEntity<Object> createDeposite(@RequestBody Deposite deposite){
         Deposite savedDeposite = depositerepo.save(deposite);
@@ -65,6 +71,7 @@ public class DepositeController {
         return ResponseEntity.created(location).build();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/deposite/{id}")
     public ResponseEntity<Object> deleteDeposite(@PathVariable Long id) throws Exception{
         Optional<Deposite> optionalDeposite = depositerepo.findById(id);
@@ -73,6 +80,7 @@ public class DepositeController {
         return new ResponseEntity<Object>(HttpStatus.OK);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/dept/{id}/deposite")
     public ResponseEntity<?> deleteDebtDeposite(@PathVariable Long id){
         return debtrepo.findById(id).map( debt -> {
@@ -81,6 +89,7 @@ public class DepositeController {
         }).orElseThrow(() -> new ResourceNotFoundException("Debt Not Found Whit userId Of " + id ));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/deposite/{id}")
     public ResponseEntity<Object> updateDeposite(@PathVariable Long id, @RequestBody Deposite deposite){
         Optional<Deposite> optDeposite = depositerepo.findById(id);
@@ -98,6 +107,8 @@ public class DepositeController {
         return new ResponseEntity<Object>(HttpStatus.NO_CONTENT);
     }
 
+
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/deposite/{id}")
     public ResponseEntity<Object> putDeposite(@PathVariable Long id, @RequestBody Deposite deposite){
         Optional<Deposite> optDeposite = depositerepo.findById(id);
