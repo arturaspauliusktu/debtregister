@@ -14,6 +14,7 @@ import debtreg.Entities.AuthProvider;
 import debtreg.Entities.User;
 import debtreg.Exceptions.OAuth2AuthenticationProcessingException;
 import debtreg.Repositories.UserRepository;
+import debtreg.Security.UserPrincipal;
 import debtreg.Security.OAuth2.User.OAuth2UserInfo;
 import debtreg.Security.OAuth2.User.OAuth2UserInfoFactory;
 

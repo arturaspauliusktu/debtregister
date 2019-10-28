@@ -10,7 +10,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import debtreg.Entities.AuthProvider;
 import debtreg.Entities.User;
+import debtreg.Exceptions.BadRequestException;
+import debtreg.Payloads.ApiResponse;
+import debtreg.Payloads.AuthResponse;
+import debtreg.Payloads.LoginRequest;
+import debtreg.Payloads.SignUpRequest;
 import debtreg.Repositories.UserRepository;
 import debtreg.Security.TokenProvider;
 
@@ -57,7 +63,7 @@ public class AuthController {
 
         // Creating user's account
         User user = new User();
-        user.setName(signUpRequest.getName());
+        user.setUsername(signUpRequest.getName());
         user.setEmail(signUpRequest.getEmail());
         user.setPassword(signUpRequest.getPassword());
         user.setProvider(AuthProvider.local);

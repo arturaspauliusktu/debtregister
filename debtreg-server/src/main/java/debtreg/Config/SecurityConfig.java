@@ -14,9 +14,15 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import debtreg.Security.CustomUserDetailsService;
+import debtreg.Security.RestAuthenticationEntryPoint;
+import debtreg.Security.TokenAuthenticationFilter;
+import debtreg.Security.OAuth2.CustomOAuth2UserService;
+import debtreg.Security.OAuth2.HttpCookieOAuth2AuthorizationRequestRepository;
+import debtreg.Security.OAuth2.OAuth2AuthenticationFailureHandler;
+import debtreg.Security.OAuth2.OAuth2AuthenticationSuccessHandler;
 
 @Configuration
 @EnableWebSecurity

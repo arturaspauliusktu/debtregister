@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import debtreg.Config.AppProperties;
+import debtreg.Exceptions.BadRequestException;
+import debtreg.Security.TokenProvider;
 import debtreg.Util.CookieUtils;
 
 import javax.servlet.ServletException;
