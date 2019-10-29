@@ -18,10 +18,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import debtreg.Entities.Debt;
 import debtreg.Entities.Deposite;
 import debtreg.Exceptions.ResourceNotFoundException;
 import debtreg.Repositories.DebtRepository;
 import debtreg.Repositories.DepositeRepository;
+import debtreg.Security.CurrentUser;
+import debtreg.Security.UserPrincipal;
 
 @RestController
 public class DepositeController {
@@ -48,14 +51,41 @@ public class DepositeController {
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/debt/{id}/deposite")
     public Deposite getDepositeByDebtId(@PathVariable Long id) throws Exception{
-        Optional<Deposite> optionalDeposite = depositerepo.findById(id);
-        if (!optionalDeposite.isPresent()) throw new Exception("Deposite Not Found with id : " + id);
-        return optionalDeposite.get();
+        Optional<Debt> optionalDept = debtrepo.findById(id);
+        if (!optionalDept.isPresent()) throw new Exception("Deposite Not Found with id : " + id);
+        return optionalDept.get().getDeposite();
+    }
+
+    @GetMapping("user/me/debt/{id}/deposite")
+    public Deposite getDepositeByDebtId(@CurrentUser UserPrincipal userprincipal, @PathVariable Long id) throws Exception{
+        Optional<Debt> optionalDept = debtrepo.findByIdAndDebtGiverId(id, userprincipal.getId());
+        if (!optionalDept.isPresent()) throw new Exception("Deposite Not Found with id : " + id);
+        return optionalDept.get().getDeposite();
+    }
+
+    @GetMapping("user/me/asset/{id}/deposite")
+    public Deposite getDepositeByAssetId(@CurrentUser UserPrincipal userprincipal, @PathVariable Long id) throws Exception{
+        Optional<Debt> optionalDept = debtrepo.findByIdAndDebtGetterId(id, userprincipal.getId());
+        if (!optionalDept.isPresent()) throw new Exception("Deposite Not Found with id : " + id);
+        return optionalDept.get().getDeposite();
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/debt/{id}/deposite")
     public Deposite createDeposite(@PathVariable Long id, @RequestBody Deposite deposite){
+           return debtrepo.findById(id).map( debt -> {
+               deposite.setDebt(debt);
+               return depositerepo.save(deposite);
+           }).orElseThrow(() -> new ResourceNotFoundException("debt id - " + id + "Not Found!"));
+    }
+
+    @PostMapping("user/me/debt/{id}/deposite")
+    public Deposite createDeposite(@CurrentUser UserPrincipal userprincipal, 
+    @PathVariable Long id, @RequestBody Deposite deposite){
+        if(!debtrepo.findByIdAndDebtGetterId(id, userprincipal.getId()).isPresent() 
+        && !debtrepo.findByIdAndDebtGiverId(id, userprincipal.getId()).isPresent()){
+            throw new ResourceNotFoundException("debt not found whit id - " + id);
+        }
            return debtrepo.findById(id).map( debt -> {
                deposite.setDebt(debt);
                return depositerepo.save(deposite);
@@ -84,7 +114,19 @@ public class DepositeController {
     @DeleteMapping("/dept/{id}/deposite")
     public ResponseEntity<?> deleteDebtDeposite(@PathVariable Long id){
         return debtrepo.findById(id).map( debt -> {
-            debtrepo.delete(debt);
+            depositerepo.delete(debt.getDeposite());
+            return ResponseEntity.ok().build();
+        }).orElseThrow(() -> new ResourceNotFoundException("Debt Not Found Whit userId Of " + id ));
+    }
+
+    @DeleteMapping("user/me/dept/{id}/deposite")
+    public ResponseEntity<?> deleteDebtDeposite(@CurrentUser UserPrincipal userprincipal, @PathVariable Long id){
+        if(!debtrepo.findByIdAndDebtGetterId(id, userprincipal.getId()).isPresent() 
+        && !debtrepo.findByIdAndDebtGiverId(id, userprincipal.getId()).isPresent()){
+            throw new ResourceNotFoundException("debt not found whit id - " + id);
+        }
+        return debtrepo.findById(id).map( debt -> {
+            depositerepo.delete(debt.getDeposite());
             return ResponseEntity.ok().build();
         }).orElseThrow(() -> new ResourceNotFoundException("Debt Not Found Whit userId Of " + id ));
     }
@@ -112,6 +154,28 @@ public class DepositeController {
     @PutMapping("/deposite/{id}")
     public ResponseEntity<Object> putDeposite(@PathVariable Long id, @RequestBody Deposite deposite){
         Optional<Deposite> optDeposite = depositerepo.findById(id);
+        if(!optDeposite.isPresent()) {
+            depositerepo.save(deposite);
+            URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+            .path("/{id}").buildAndExpand(deposite.getId()).toUri();
+            return ResponseEntity.created(location).build();
+        }
+        optDeposite.get().setId(deposite.getId());
+        optDeposite.get().setDebt(deposite.getDebt());
+        optDeposite.get().setDescription(deposite.getDescription());
+        optDeposite.get().setName(deposite.getName());
+        depositerepo.save(optDeposite.get());
+        return new ResponseEntity<Object>(HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("/user/me/debt/{id}/deposite/")
+    public ResponseEntity<Object> putDeposite(@CurrentUser UserPrincipal userprincipal, 
+    @PathVariable Long id, @RequestBody Deposite deposite){
+        if(!debtrepo.findByIdAndDebtGetterId(id, userprincipal.getId()).isPresent() 
+        && !debtrepo.findByIdAndDebtGiverId(id, userprincipal.getId()).isPresent()){
+            throw new ResourceNotFoundException("debt not found whit id - " + id);
+        }
+        Optional<Deposite> optDeposite = depositerepo.findById(debtrepo.findById(id).get().getDeposite().getId());
         if(!optDeposite.isPresent()) {
             depositerepo.save(deposite);
             URI location = ServletUriComponentsBuilder.fromCurrentRequest()

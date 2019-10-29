@@ -79,6 +79,13 @@ public class MessageController {
           return messagerepo.findAllByMessageGiverId(userId, pageable);
      }
 
+     @GetMapping("/giver/me/messages/{id}")
+     public Message getAllMessagessByGiverId(@CurrentUser UserPrincipal userprincipal,
+     @PathVariable Long id){
+          Long userId = userprincipal.getId();
+          return messagerepo.findByIdAndMessageGiverId(userId, id).get();
+     }
+
      @PreAuthorize("hasRole('ADMIN')")
      @GetMapping("/getter/{userId}/messages")
      public Page<Message> getAllMessagessByUserId(@PathVariable(name = "userId") Long userId,
@@ -93,42 +100,57 @@ public class MessageController {
           return messagerepo.findAllByMessageGetterId(userId, pageable);
      }
 
+     @GetMapping("/getter/me/messages/{id}")
+     public Message getAllMessagessByGetterId(@CurrentUser UserPrincipal userprincipal,
+      @PathVariable Long id){
+          Long userId = userprincipal.getId();
+          return messagerepo.findByIdAndMessageGetterId(userId, id).get();
+     }
+
      @PreAuthorize("hasRole('ADMIN')")
      @PostMapping("/giver/{userId}/message")
      public Message addMessageToGiver(@PathVariable Long userId, @RequestBody Message requestmessage) {
-           return userrepo.findById(userId).map( ADMIN -> {
-               requestmessage.setGiver(ADMIN);
+           return userrepo.findById(userId).map( message -> {
+               requestmessage.setGiver(message);
+               requestmessage.setOwner(userId);
                return messagerepo.save(requestmessage);
-           }).orElseThrow(() -> new ResourceNotFoundException("ADMIN id - " + userId + "Not Found!"));
+           }).orElseThrow(() -> new ResourceNotFoundException("user id - " + userId + "Not Found!"));
      }
 
      @PostMapping("/giver/me/message")
      public Message addMessageToGiver(@CurrentUser UserPrincipal userprincipal, @RequestBody Message requestmessage) {
           Long userId = userprincipal.getId();
-           return userrepo.findById(userId).map( ADMIN -> {
-               requestmessage.setGiver(ADMIN);
+          if(!userrepo.findById(requestmessage.getGiver().getId()).isPresent()) {
+               throw new ResourceNotFoundException("There is no user with id - " + requestmessage.getGiver().getId());
+          }
+           return userrepo.findById(userId).map( message -> {
+               requestmessage.setGiver(message);
+               requestmessage.setGetter(userrepo.findById(requestmessage.getGetter().getId()).get());
+               requestmessage.setOwner(userprincipal.getId());
                return messagerepo.save(requestmessage);
-           }).orElseThrow(() -> new ResourceNotFoundException("ADMIN id - " + userId + "Not Found!"));
+           }).orElseThrow(() -> new ResourceNotFoundException("user id - " + userId + "Not Found!"));
      }
 
 
      @PreAuthorize("hasRole('ADMIN')")
      @PostMapping("/getter/{userId}/message")
      public Message addMessageToGetter(@PathVariable Long userId, @RequestBody Message requestmessage) {
-           return userrepo.findById(userId).map( ADMIN -> {
-               requestmessage.setGetter(ADMIN);
+           return userrepo.findById(userId).map( message -> {
+               requestmessage.setOwner(userId);
+               requestmessage.setGetter(message);
                return messagerepo.save(requestmessage);
-           }).orElseThrow(() -> new ResourceNotFoundException("ADMIN id - " + userId + "Not Found!"));
+           }).orElseThrow(() -> new ResourceNotFoundException("user id - " + userId + "Not Found!"));
      }
 
-     @PreAuthorize("hasRole('ADMIN')")
      @PostMapping("/getter/me/message")
      public Message addMessageToGetter(@CurrentUser UserPrincipal userprincipal, @RequestBody Message requestmessage) {
           Long userId = userprincipal.getId();
-           return userrepo.findById(userId).map( ADMIN -> {
-               requestmessage.setGetter(ADMIN);
+           return userrepo.findById(userId).map( message -> {
+               requestmessage.setGetter(message);
+               requestmessage.setGiver(userrepo.findById(requestmessage.getGiver().getId()).get());
+               requestmessage.setOwner(userprincipal.getId());
                return messagerepo.save(requestmessage);
-           }).orElseThrow(() -> new ResourceNotFoundException("ADMIN id - " + userId + "Not Found!"));
+           }).orElseThrow(() -> new ResourceNotFoundException("user id - " + userId + "Not Found!"));
      }
 
      @PreAuthorize("hasRole('ADMIN')")
@@ -143,7 +165,7 @@ public class MessageController {
      @DeleteMapping("/user/me/message/{messageId}")
      public ResponseEntity<?> deleteUserMessage(@CurrentUser UserPrincipal userprincipal, @PathVariable Long messageId){
           Long userId = userprincipal.getId();
-          return messagerepo.findByIdAndMessageGiverId(userId, messageId).map( message -> {
+          return messagerepo.findByIdAndMessageUserId(messageId, userId).map( message -> {
                messagerepo.delete(message);
                return ResponseEntity.ok().build();
           }).orElseThrow(() -> new ResourceNotFoundException("Message Not Found Whit userId Of " + userId + "and debtId " + messageId ));

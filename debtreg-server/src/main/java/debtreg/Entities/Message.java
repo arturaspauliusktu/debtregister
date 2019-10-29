@@ -34,13 +34,25 @@ public class Message {
     @JsonIgnore
     @NotNull
     private User debt_giver;
+    @NotNull 
+    private Long owner;
 
-    public Message(long id, String text, Date date, User debt_getter, User debt_giver) {
+    public Message(){
+        this.id = 0;
+        this.text = "text";
+        this.date = null;
+        this.debt_getter = null;
+        this.debt_giver = null;
+        this.owner = null;
+    }
+
+    public Message(long id, String text, Date date, User debt_getter, User debt_giver, Long owner) {
         this.id = id;
         this.text = text;
         this.date = date;
         this.debt_getter = debt_getter;
         this.debt_giver = debt_giver;
+        this.owner = owner;
     }
 
     public long getId() {
@@ -81,6 +93,30 @@ public class Message {
 
     public void setGiver(User debt_giver) {
         this.debt_giver = debt_giver;
+    }
+
+    public User getDebt_getter() {
+        return debt_getter;
+    }
+
+    public void setDebt_getter(User debt_getter) {
+        this.debt_getter = debt_getter;
+    }
+
+    public User getDebt_giver() {
+        return debt_giver;
+    }
+
+    public void setDebt_giver(User debt_giver) {
+        this.debt_giver = debt_giver;
+    }
+
+    public Long getOwner() {
+        return owner;
+    }
+
+    public void setOwner(Long owner) {
+        this.owner = owner;
     }
     
 }

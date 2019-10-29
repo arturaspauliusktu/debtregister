@@ -21,4 +21,6 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     Optional<Message> findByIdAndMessageGiverId(@Param(value = "user_id") Long userId, @Param(value = "message_id") Long messageId);
     @Query(value = "select m from Message m where m.debt_getter.id = :user_id and m.id = :message_id")
     Optional<Message> findByIdAndMessageGetterId(@Param(value = "user_id") Long userId, @Param(value = "message_id") Long messageId);
+    @Query(value = "select d from Message d where d.debt_getter.id = :user_id and d.id = :message_id or d.debt_giver.id = :user_id and d.id = :message_id")
+    Optional<Message> findByIdAndMessageUserId(@Param("message_id") Long id,@Param("user_id") Long userId);
 }
