@@ -6,6 +6,8 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToOne;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 public class Deposite {
     @Id
@@ -14,6 +16,7 @@ public class Deposite {
     private String name;
     private String description;
     @OneToOne
+    @JsonIgnore
     private Debt debt;
 
     public Deposite(){

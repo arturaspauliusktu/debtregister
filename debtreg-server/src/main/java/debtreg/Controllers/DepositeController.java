@@ -75,6 +75,8 @@ public class DepositeController {
     public Deposite createDeposite(@PathVariable Long id, @RequestBody Deposite deposite){
            return debtrepo.findById(id).map( debt -> {
                deposite.setDebt(debt);
+               debt.setDeposite(deposite);
+               debtrepo.save(debt);
                return depositerepo.save(deposite);
            }).orElseThrow(() -> new ResourceNotFoundException("debt id - " + id + "Not Found!"));
     }
@@ -86,10 +88,12 @@ public class DepositeController {
         && !debtrepo.findByIdAndDebtGiverId(id, userprincipal.getId()).isPresent()){
             throw new ResourceNotFoundException("debt not found whit id - " + id);
         }
-           return debtrepo.findById(id).map( debt -> {
-               deposite.setDebt(debt);
-               return depositerepo.save(deposite);
-           }).orElseThrow(() -> new ResourceNotFoundException("debt id - " + id + "Not Found!"));
+            Debt founddebt = debtrepo.findById(id).get();
+            deposite.setDebt(founddebt);
+            Deposite returndepo = depositerepo.save(deposite);
+            founddebt.setDeposite(deposite);
+            debtrepo.save(founddebt);
+           return returndepo;
     }
 
     @PreAuthorize("hasRole('ADMIN')")

@@ -31,6 +31,7 @@ public class Debt {
     private User debt_getter;
     @OneToOne
     @Nullable
+    @JsonIgnore
     private Deposite deposite;
 
     public Debt(){
