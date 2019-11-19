@@ -7,11 +7,12 @@ import AppHeader from '../common/AppHeader';
 import Home from '../home/Home';
 import Login from '../user/login/Login';
 import Signup from '../user/signup/Signup';
+import Debts from '../user/debts/Debts';
 import Profile from '../user/profile/Profile';
 import OAuth2RedirectHandler from '../user/oauth2/OAuth2RedirectHandler';
 import NotFound from '../common/NotFound';
 import LoadingIndicator from '../common/LoadingIndicator';
-import { getCurrentUser } from '../util/APIUtils';
+import { getCurrentUser, getCurrentUserDebts } from '../util/APIUtils';
 import { ACCESS_TOKEN } from '../constants';
 import PrivateRoute from '../common/PrivateRoute';
 import Alert from 'react-s-alert';
@@ -25,6 +26,7 @@ class App extends Component {
     this.state = {
       authenticated: false,
       currentUser: null,
+      userDebts: null,
       loading: false
     }
 
@@ -48,7 +50,13 @@ class App extends Component {
       this.setState({
         loading: false
       });  
-    });    
+    }); 
+    getCurrentUserDebts()
+    .then(response => {
+      this.setState({
+        userDebts: response.content
+      });
+    });
   }
 
   handleLogout() {
@@ -79,6 +87,8 @@ class App extends Component {
             <Route exact path="/" component={Home}></Route>           
             <PrivateRoute path="/profile" authenticated={this.state.authenticated} currentUser={this.state.currentUser}
               component={Profile}></PrivateRoute>
+            <PrivateRoute path="/debts" authenticated={this.state.authenticated} currentUser={this.state.currentUser} userDebts={this.state.userDebts}
+              component={Debts}></PrivateRoute>
             <Route path="/login"
               render={(props) => <Login authenticated={this.state.authenticated} {...props} />}></Route>
             <Route path="/signup"

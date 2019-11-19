@@ -50,4 +50,19 @@ export function signup(signupRequest) {
     });
 }
 
+export function getCurrentUserDebts() {
+
+    if(!localStorage.getItem(ACCESS_TOKEN)) {
+        return Promise.reject("No access token set.");
+    }
+
+    let response = request({
+        url: API_BASE_URL + "/user/me/debts",
+        method: 'GET'
+    });
+    return response
+}
+
+
+
 //TODO:add registration date to user signup form

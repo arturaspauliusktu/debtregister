@@ -87,6 +87,18 @@ public class User {
         this.providerId = providerId;
     }
 
+    public User(long id, @NotNull @Size(max = 100) String username, @Email String email,
+    @NotNull @Size(max = 100) String password, Date registration, String imageUrl, String providerId, UserRole role) {
+        this.id = id;
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.registration = registration;
+        this.imageUrl = imageUrl;
+        this.providerId = providerId;
+        this.role = role;
+    }
+
     public long getId() {
         return id;
     }
