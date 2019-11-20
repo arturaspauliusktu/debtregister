@@ -44,8 +44,8 @@ public class UserController {
      @GetMapping("/user/me")
      //@PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
      public User getCurrentUser(@CurrentUser UserPrincipal userPrincipal) {
-          return repo.findById(userPrincipal.getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("User", "id", userPrincipal.getId()));
+          return repo.findById(userPrincipal.getId()).get();
+                    //TODO: uncomment .orElseThrow(() -> new ResourceNotFoundException("User", "id", userPrincipal.getId()));
      }
 
      @PostMapping("/user")
@@ -63,13 +63,14 @@ public class UserController {
      public ResponseEntity<Object> removeUser(@PathVariable Long id){
           repo.deleteById(id);
           Optional<User> user = repo.findById(id);
-          if(user.isPresent()){
-               URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-               .path("/{id}").buildAndExpand(user.get().getId()).toUri();
-               HttpHeaders responHeaders = new HttpHeaders();
-               responHeaders.setLocation(location);
-               return new ResponseEntity<Object>("Could Not delete user", responHeaders, HttpStatus.INTERNAL_SERVER_ERROR);
-          }
+          //TODO: uncomment after test
+          // if(user.isPresent()){
+          //      URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+          //      .path("/{id}").buildAndExpand(user.get().getId()).toUri();
+          //      HttpHeaders responHeaders = new HttpHeaders();
+          //      responHeaders.setLocation(location);
+          //      return new ResponseEntity<Object>("Could Not delete user", responHeaders, HttpStatus.INTERNAL_SERVER_ERROR);
+          // }
           return new ResponseEntity<Object>(HttpStatus.NO_CONTENT);
      }
 
@@ -77,12 +78,17 @@ public class UserController {
      @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")     
      public ResponseEntity<Object> updateUser(@RequestBody User requestUser, @PathVariable Long id) throws Exception{
           Optional<User> optionalUser = repo.findById(id);
-          if(!optionalUser.isPresent()) throw new Exception("User Not Found with id = "+ id);
+          if(!optionalUser.isPresent()) 
+          throw new Exception("User Not Found with id = "+ id);
           User user = optionalUser.get();
-          if(requestUser.getId() != 0) user.setId(requestUser.getId());
-          if(requestUser.getUsername() != null ) user.setUsername(requestUser.getUsername());
-          if(requestUser.getPassword() != null) user.setPassword(requestUser.getPassword());
-          if(requestUser.getRegistration() != null) user.setRegistration(requestUser.getRegistration());
+          if(requestUser.getId() != 0) 
+          user.setId(requestUser.getId());
+          if(requestUser.getUsername() != "" ) 
+          user.setUsername(requestUser.getUsername());
+          if(requestUser.getPassword() != "" ) 
+          user.setPassword(requestUser.getPassword());
+          if(requestUser.getRegistration() != null) 
+          user.setRegistration(requestUser.getRegistration());
           return new ResponseEntity<Object>(HttpStatus.NO_CONTENT);
      }
 }

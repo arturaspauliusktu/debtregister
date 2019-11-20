@@ -6,6 +6,9 @@ import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -75,6 +78,12 @@ public class UserControllerTest {
         userRepository.deleteAll();
     }
 
+    /**
+     * Unit test to validate input and then create user.
+     * JWT is gathered and atached to authorization header in order to mock API call.
+     * @throws Exception
+     * @throws IOException
+     */
     @Test
     public void whenValidInput_thenCreateUser() throws Exception, IOException{
         User user = new User(new Long(123), "Jonas", "jonas@mail.com", "12345", new Date(), "", "123", UserRole.ROLE_USER);
@@ -96,21 +105,26 @@ public class UserControllerTest {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         String accessToken = tokenProvider.createToken(authentication);
-        MvcResult result = mvc.perform(post("/user")
+        mvc.perform(post("/user")
         .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
         .contentType(MediaType.APPLICATION_JSON)
-        .content(JsonUtil.toJson(user)))
-        .andReturn();
+        .content(JsonUtil.toJson(user)));
         List<User> found = userRepository.findAll();
         assertThat(found).extracting(User::getUsername).contains("Jonas");
     }
 
+    /**
+     * adds two users to repository and then gets users by calling API
+     * checks if json contains same names as user objects. Then checks HTTP status code. 
+     * @throws Exception
+     */
     @Test
     public void givenUser_whenGetUsers_thenStatus200() throws Exception {
-        createTestUser("Jonas");
-        createTestUser("Lukas");
+        String jonasToken = createTestUser("Jonas", "jonas@mail.com");
+        createTestUser("Lukas", "petras@mail.com");
 
-        mvc.perform(get("/users").contentType(MediaType.APPLICATION_JSON))
+        mvc.perform(get("/users").contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
         .andDo(print())
         .andExpect(status().isOk())
         .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
@@ -119,19 +133,129 @@ public class UserControllerTest {
         .andExpect(jsonPath("$[1].username", is("Lukas")));
     }
 
-    public void giveUser_whenGetUser_thenStatus200() throws Exception {
-        createTestUser("Jonas");
 
-        mvc.perform(get("/user/123").contentType(MediaType.APPLICATION_JSON))
+    @Test
+    public void giveUser_whenGetUser_thenStatus200() throws Exception {
+        String name = "Jonas";
+        String email = "jonas@mail.com";
+        String jonasToken = createTestUser(name , email);
+        User user = userRepository.findByEmail(email).get();
+        mvc.perform(get("/user/"+user.getId()).contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
         .andDo(print())
         .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(1))))
-        .andExpect(jsonPath("$[0].username", is("Jonas")));
+        .andExpect(jsonPath("$.username", is(name)));
     }
 
-    private User createTestUser(String username){
-        User user = new User(new Long(123), username, "jonas@mail.com", "12345", new Date(), "", "123");
+    @Test(expected = Exception.class)
+    public void getUser_thenUserNotFound() throws Exception {
+        String name = "Jonas";
+        String email = "jonas@mail.com";
+        String jonasToken = createTestUser(name , email);
+        mvc.perform(get("/user/789946112133168").contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken));
+    }
+
+    @Test
+    public void getCurrentUser_thenStatus200() throws Exception{
+        String name = "Jonas";
+        String email = "jonas@mail.com";
+        String jonasToken = createTestUser(name , email);
+        mvc.perform(get("/user/me").contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
+        .andDo(print())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.username", is(name)))
+        .andExpect(status().isOk());
+    }
+
+    @Test
+    public void deleteUser_thenStatus204() throws Exception{
+        String name = "Jonas";
+        String email = "jonas@mail.com";
+        String jonasToken = createTestUser(name , email);
+        User user = userRepository.findByEmail(email).get();
+        mvc.perform(delete("/user/"+user.getId()).contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
+        .andDo(print())
+        .andExpect(status().isNoContent());
+    }
+
+    @Test
+    public void patchUser_thenStatus204() throws Exception {
+        String name = "Jonas";
+        String email = "jonas@mail.com";
+        String name1 = "Petras";
+        String email1 = "Petras@mail.com";
+        String jonasToken = createTestUser(name , email);
+        createTestUser(name1, email1);
+        User user = userRepository.findByEmail(email).get();
+        User user1 = userRepository.findByEmail(email1).get();
+
+        mvc.perform(patch("/user/"+user.getId())
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken)
+        .content(JsonUtil.toJson(user1)))
+        .andDo(print())
+        .andExpect(status().isNoContent());
+    }
+
+    @Test
+    public void patchUser_thenStatus204_withnulls() throws Exception {
+        String name = "Jonas";
+        String email = "jonas@mail.com";
+        String name1 = "Petras";
+        String email1 = "Petras@mail.com";
+        String jonasToken = createTestUser(name , email);
+        createTestUser(name1, email1);
+        User user = userRepository.findByEmail(email).get();
+        User user1 = userRepository.findByEmail(email1).get();
+
+        user1.setId(0);
+        user1.setUsername("");
+        user1.setPassword("");
+        user1.setRegistration(null);
+
+        mvc.perform(patch("/user/"+user.getId())
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken)
+        .content(JsonUtil.toJson(user1)))
+        .andDo(print())
+        .andExpect(status().isNoContent());
+    }
+
+    @Test(expected = Exception.class)
+    public void patchUser_thenUserNotFound() throws Exception {
+        String name = "Jonas";
+        String email = "jonas@mail.com";
+
+        String jonasToken = createTestUser(name , email);
+        User user = userRepository.findByEmail(email).get();
+
+        mvc.perform(patch("/user/789946112133168")
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken)
+        .content(JsonUtil.toJson(user)))
+        .andDo(print())
+        .andExpect(status().isNoContent());
+    }
+
+    private String createTestUser(String username, String email){
+        User user = new User(new Long(123), username, email, "12345", new Date(), "", "123", UserRole.ROLE_ADMIN);
+        user.setProvider(AuthProvider.local);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         userRepository.saveAndFlush(user);
-        return user;
+
+        Authentication authentication = authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(
+                    user.getEmail(),
+                    "12345"
+            )
+        );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String accessToken = tokenProvider.createToken(authentication);
+
+        return accessToken;
     }
 }
