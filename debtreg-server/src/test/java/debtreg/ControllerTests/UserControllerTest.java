@@ -20,13 +20,10 @@ import java.util.List;
 
 import org.apache.http.HttpHeaders;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -38,11 +35,9 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.context.WebApplicationContext;
 
 import debtreg.App;
-import debtreg.Controllers.UserController;
 import debtreg.Entities.AuthProvider;
 import debtreg.Entities.User;
 import debtreg.Entities.UserRole;
@@ -152,7 +147,8 @@ public class UserControllerTest {
         String name = "Jonas";
         String email = "jonas@mail.com";
         String jonasToken = createTestUser(name , email);
-        mvc.perform(get("/user/789946112133168").contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(get("/user/789946112133168")
+        .contentType(MediaType.APPLICATION_JSON)
         .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken));
     }
 

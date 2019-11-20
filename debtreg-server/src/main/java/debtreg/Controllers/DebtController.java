@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -103,15 +104,12 @@ public class DebtController {
            return userrepo.findById(userId).map( user -> {
                requestdebt.setGiver(user);
                return debtrepo.save(requestdebt);
-           }).orElseThrow(() -> new ResourceNotFoundException("User id - " + userId + "Not Found!"));
+           }).get();
      }
 
      @PreAuthorize("hasRole('ADMIN')")
      @PostMapping("/getter/{userId}/debt")
      public Debt addDebtToGetter(@PathVariable Long userId, @RequestBody Debt requestdebt) {
-          if(!userrepo.findById(requestdebt.getGiver().getId()).isPresent()) {
-               throw new ResourceNotFoundException("There is no user with id - " + requestdebt.getGiver().getId());
-          }
            return userrepo.findById(userId).map( user -> {
                requestdebt.setGetter(user);
                requestdebt.setGiver(userrepo.findById(requestdebt.getGiver().getId()).get());
@@ -128,14 +126,11 @@ public class DebtController {
      @PostMapping("/getter/me/debt")
      public Debt addDebtToGetter(@CurrentUser UserPrincipal userprincipal, @RequestBody Debt requestdebt) {
           Long userId = userprincipal.getId();
-          if(!userrepo.findById(requestdebt.getGiver().getId()).isPresent()) {
-               throw new ResourceNotFoundException("There is no user with id - " + requestdebt.getGiver().getId());
-          }
            return userrepo.findById(userId).map( user -> {
                requestdebt.setGetter(user);
                requestdebt.setGiver(userrepo.findById(requestdebt.getGiver().getId()).get());
                return debtrepo.save(requestdebt);
-           }).orElseThrow(() -> new ResourceNotFoundException("User id - " + userId + "Not Found!"));
+           }).get();
      }
 
      @PreAuthorize("hasRole('ADMIN')")
@@ -146,6 +141,7 @@ public class DebtController {
                return ResponseEntity.ok().build();
           }).orElseThrow(() -> new ResourceNotFoundException("Debt Not Found Whit userId Of " + userId + "and debtId " + debtId ));
      }
+     
 
      @DeleteMapping("/user/me/debt/{debtId}")
      public ResponseEntity<?> deleteUserDebt(@CurrentUser UserPrincipal userprincipal, @PathVariable Long debtId){
@@ -165,11 +161,15 @@ public class DebtController {
                throw new ResourceNotFoundException("userId " + userId + "Not Found!");
           }
 
-          return debtrepo.findById(userId).map( debt -> {
-               if(debtrequest.getId() != 0) debt.setId(debtrequest.getId());
-               if(debtrequest.getMoneysum() != 0 ) debt.setMoneysum(debtrequest.getMoneysum());
-               if(debtrequest.getGetter() != null) debt.setGetter(debtrequest.getGetter());
-               if(debtrequest.getGiver() != null) debt.setGiver(debtrequest.getGiver());
+          return debtrepo.findByIdAndDebtUserId(debtId, userId).map( debt -> {
+               if(debtrequest.getId() != 0) 
+               debt.setId(debtrequest.getId());
+               if(debtrequest.getMoneysum() != 0 ) 
+               debt.setMoneysum(debtrequest.getMoneysum());
+               if(debtrequest.getGetter() != null) 
+               debt.setGetter(debtrequest.getGetter());
+               if(debtrequest.getGiver() != null) 
+               debt.setGiver(debtrequest.getGiver());
                return debtrepo.save(debt);
           }).orElseThrow(() -> new ResourceNotFoundException("debtId " + debtId + "Not Found"));
      }
@@ -180,33 +180,17 @@ public class DebtController {
      @PathVariable Long debtId,
      @RequestBody Debt debtrequest){
           Long userId = userprincipal.getId();
-          if(!userrepo.existsById(userId)){
-               throw new ResourceNotFoundException("userId " + userId + "Not Found!");
-          }
 
-          if(!debtrepo.findByIdAndDebtGetterId(userId, debtId).isPresent() ||
-          !debtrepo.findByIdAndDebtGiverId(userId, debtId).isPresent()){
-               throw new ResourceNotFoundException("Message not found " + debtId);
-          }
-
-          return debtrepo.findById(userId).map( debt -> {
-               if(debtrequest.getId() != 0) debt.setId(debtrequest.getId());
-               if(debtrequest.getMoneysum() != 0 ) debt.setMoneysum(debtrequest.getMoneysum());
-               if(debtrequest.getGetter() != null) debt.setGetter(debtrequest.getGetter());
-               if(debtrequest.getGiver() != null) debt.setGiver(debtrequest.getGiver());
+          return debtrepo.findByIdAndDebtUserId(debtId, userId).map( debt -> {
+               if(debtrequest.getId() != 0) 
+               debt.setId(debtrequest.getId());
+               if(debtrequest.getMoneysum() != 0 ) 
+               debt.setMoneysum(debtrequest.getMoneysum());
+               if(debtrequest.getGetter() != null) 
+               debt.setGetter(debtrequest.getGetter());
+               if(debtrequest.getGiver() != null) 
+               debt.setGiver(debtrequest.getGiver());
                return debtrepo.save(debt);
           }).orElseThrow(() -> new ResourceNotFoundException("debtId " + debtId + "Not Found"));
-     }
-
-     @PreAuthorize("hasRole('ADMIN')")
-     @PatchMapping("/debt/{id}")
-     public ResponseEntity<Object> updateDebt(@RequestBody Debt requestDebt, @PathVariable Long id) throws Exception{
-          Optional<Debt> optionalDebt = debtrepo.findById(id);
-          if(!optionalDebt.isPresent()) throw new Exception("Debt Not Found with id = "+ id);
-          Debt debt = optionalDebt.get();
-          if(requestDebt.getMoneysum() != 0 ) debt.setMoneysum(requestDebt.getMoneysum());
-          if(requestDebt.getGetter() != null) debt.setGetter(requestDebt.getGetter());
-          if(requestDebt.getGiver() != null) debt.setGiver(requestDebt.getGiver());
-          return new ResponseEntity<Object>(HttpStatus.NO_CONTENT);
      }
 }
