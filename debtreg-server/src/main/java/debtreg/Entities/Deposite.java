@@ -15,25 +15,15 @@ public class Deposite {
     private long id;
     private String name;
     private String description;
-    @OneToOne
-    @JsonIgnore
-    private Debt debt;
 
     public Deposite(){
         name = "";
         description = "";
-        debt = null;
     }
 
     public Deposite(String name, String description) {
         this.name = name;
         this.description = description;
-    }
-
-    public Deposite(String name, String description, Debt debt) {
-        this.name = name;
-        this.description = description;
-        this.debt = debt;
     }
 
     public long getId(){
@@ -58,13 +48,5 @@ public class Deposite {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public Debt getDebt() {
-        return debt;
-    }
-
-    public void setDebt(Debt debt) {
-        this.debt = debt;
     }
 }
