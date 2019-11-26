@@ -42,13 +42,11 @@ import org.springframework.web.context.WebApplicationContext;
 
 import debtreg.App;
 import debtreg.Entities.AuthProvider;
-import debtreg.Entities.Debt;
-import debtreg.Entities.Deposite;
+import debtreg.Entities.Message;
 import debtreg.Entities.User;
 import debtreg.Entities.UserRole;
 import debtreg.Exceptions.ResourceNotFoundException;
-import debtreg.Repositories.DebtRepository;
-import debtreg.Repositories.DepositeRepository;
+import debtreg.Repositories.MessageRepository;
 import debtreg.Repositories.UserRepository;
 import debtreg.Security.TokenProvider;
 
@@ -57,7 +55,7 @@ import debtreg.Security.TokenProvider;
 @AutoConfigureMockMvc 
 @ContextConfiguration
 @WebAppConfiguration
-public class DepositeControllerTest {
+public class MessageControllerTest {
 
     @Autowired
     protected WebApplicationContext webApplicationContext;
@@ -78,20 +76,17 @@ public class DepositeControllerTest {
     protected UserRepository userRepository;
 
     @Autowired
-    protected DebtRepository debtRepository;
-
-    @Autowired
-    protected DepositeRepository depositeRepository;
+    protected MessageRepository messageRepository;
 
     @After
     public void resetDb(){
-        debtRepository.deleteAll();
-        depositeRepository.deleteAll();
+        messageRepository.deleteAll();
         userRepository.deleteAll();
     }
 
     @Test
-    public void givenDeposites_whenGetDeposites_thenStatus200() throws Exception {
+    public void givenMessages_thenGetMessages()
+    throws Exception{
         String name1 = "Jonas";
         String email1 = "jonas@mail.com";
         String name2 = "Petras";
@@ -102,24 +97,23 @@ public class DepositeControllerTest {
         User user1 = userRepository.findByEmail(email1).get();
         User user2 = userRepository.findByEmail(email2).get();
 
-        Debt debt1 = createTestDebt(user1, user2);
-        Debt debt2 = createTestDebt(user1, user2);
+        Message message1 = createTestMessage(user1, user2, user1.getId());
+        Message message2 = createTestMessage(user1, user2, user1.getId());
 
-        Deposite deposite1 = createTestDeposite(debt1);
-        Deposite deposite2 = createTestDeposite(debt2);
-        
-        mvc.perform(get("/deposites/").contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(get("/messages/")
+        .contentType(MediaType.APPLICATION_JSON)
         .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
         .andDo(print())
         .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(2))))
-        .andExpect(jsonPath("$[0].id", is((int)deposite1.getId())))
-        .andExpect(jsonPath("$[1].id", is((int)deposite2.getId())))
+        .andExpect(jsonPath("$[0].id", is((int)message1.getId())))
+        .andExpect(jsonPath("$[1].id", is((int)message2.getId())))
         .andExpect(status().isOk());
     }
 
     @Test
-    public void givenDeposite_whenGetDeposite_thenStatus200() throws Exception {
+    public void givenMessages_thenGetMessage()
+    throws Exception{
         String name1 = "Jonas";
         String email1 = "jonas@mail.com";
         String name2 = "Petras";
@@ -130,21 +124,20 @@ public class DepositeControllerTest {
         User user1 = userRepository.findByEmail(email1).get();
         User user2 = userRepository.findByEmail(email2).get();
 
-        Debt debt1 = createTestDebt(user1, user2);
+        Message message1 = createTestMessage(user1, user2, user1.getId());
 
-        Deposite deposite1 = createTestDeposite(debt1);
-        
-        mvc.perform(get("/deposite/"+deposite1.getId()).contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(get("/message/"+message1.getId())
+        .contentType(MediaType.APPLICATION_JSON)
         .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
         .andDo(print())
         .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.id", is((int)deposite1.getId())))
+        .andExpect(jsonPath("$.id", is((int)message1.getId())))
         .andExpect(status().isOk());
     }
 
     @Test(expected = Exception.class)
-    public void givenDeposite_whenGetDeposite_thenDepositeNotFound()
-    throws Exception {
+    public void givenMessages_whenGetMessage_thenMessageNotFound()
+    throws Exception{
         String name1 = "Jonas";
         String email1 = "jonas@mail.com";
         String name2 = "Petras";
@@ -155,501 +148,606 @@ public class DepositeControllerTest {
         User user1 = userRepository.findByEmail(email1).get();
         User user2 = userRepository.findByEmail(email2).get();
 
-        Debt debt1 = createTestDebt(user1, user2);
+        Message message1 = createTestMessage(user1, user2, user1.getId());
 
-        createTestDeposite(debt1);
-        
-        MvcResult result = mvc.perform(
-            get("/deposite/"+12314155)
+        mvc.perform(get("/message/"+241241)
         .contentType(MediaType.APPLICATION_JSON)
         .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
         .andDo(print())
-        .andExpect(content()
-        .contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.id", is((int)message1.getId())))
+        .andExpect(status().isOk());
+    }
+
+    @Test
+    public void givenMessages_thenGetMessageByGiverId()
+    throws Exception{
+        String name1 = "Jonas";
+        String email1 = "jonas@mail.com";
+        String name2 = "Petras";
+        String email2 = "petras@mail.com";
+        String jonasToken = createTestUser(name1, email1);
+        createTestUser(name2, email2);
+
+        User user1 = userRepository.findByEmail(email1).get();
+        User user2 = userRepository.findByEmail(email2).get();
+
+        Message message1 = createTestMessage(user1, user2, user1.getId());
+        Message message2 = createTestMessage(user1, user2, user1.getId());
+
+        mvc.perform(get("/giver/"+user2.getId()+"/messages")
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
+        .andDo(print())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(2))))
+        .andExpect(jsonPath("$.content[0].id", is((int)message1.getId())))
+        .andExpect(jsonPath("$.content[1].id", is((int)message2.getId())))
+        .andExpect(status().isOk());
+    }
+
+    @Test
+    public void givenMessages_thenGetMessageByCurrentGiverId()
+    throws Exception{
+        String name1 = "Jonas";
+        String email1 = "jonas@mail.com";
+        String name2 = "Petras";
+        String email2 = "petras@mail.com";
+        String jonasToken = createTestUser(name1, email1);
+        String petrasToken = createTestUser(name2, email2);
+
+        User user1 = userRepository.findByEmail(email1).get();
+        User user2 = userRepository.findByEmail(email2).get();
+
+        Message message1 = createTestMessage(user1, user2, user1.getId());
+        Message message2 = createTestMessage(user1, user2, user1.getId());
+
+        mvc.perform(get("/giver/me/messages")
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken))
+        .andDo(print())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(2))))
+        .andExpect(jsonPath("$.content[0].id", is((int)message1.getId())))
+        .andExpect(jsonPath("$.content[1].id", is((int)message2.getId())))
+        .andExpect(status().isOk());
+    }
+
+    @Test
+    public void givenMessages_thenGetMessageByCurrentGiverIdAndMessageId()
+    throws Exception{
+        String name1 = "Jonas";
+        String email1 = "jonas@mail.com";
+        String name2 = "Petras";
+        String email2 = "petras@mail.com";
+        String jonasToken = createTestUser(name1, email1);
+        String petrasToken = createTestUser(name2, email2);
+
+        User user1 = userRepository.findByEmail(email1).get();
+        User user2 = userRepository.findByEmail(email2).get();
+
+        Message message1 = createTestMessage(user1, user2, user1.getId());
+        //Message message2 = createTestMessage(user1, user2, user1.getId());
+
+        mvc.perform(get("/giver/me/messages/"+message1.getId())
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken))
+        .andDo(print())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        //.andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(2))))
+        .andExpect(jsonPath("$.id", is((int)message1.getId())))
+        //.andExpect(jsonPath("$.content[1].id", is((int)message2.getId())))
+        .andExpect(status().isOk());
+    }
+
+    
+    @Test
+    public void givenMessages_thenGetMessageByGetterId()
+    throws Exception{
+        String name1 = "Jonas";
+        String email1 = "jonas@mail.com";
+        String name2 = "Petras";
+        String email2 = "petras@mail.com";
+        String jonasToken = createTestUser(name1, email1);
+        createTestUser(name2, email2);
+
+        User user1 = userRepository.findByEmail(email1).get();
+        User user2 = userRepository.findByEmail(email2).get();
+
+        Message message1 = createTestMessage(user1, user2, user1.getId());
+        Message message2 = createTestMessage(user1, user2, user1.getId());
+
+        mvc.perform(get("/getter/"+user1.getId()+"/messages")
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
+        .andDo(print())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(2))))
+        .andExpect(jsonPath("$.content[0].id", is((int)message1.getId())))
+        .andExpect(jsonPath("$.content[1].id", is((int)message2.getId())))
+        .andExpect(status().isOk());
+    }
+
+    @Test
+    public void givenMessages_thenGetMessageByCurrentGetterId()
+    throws Exception{
+        String name1 = "Jonas";
+        String email1 = "jonas@mail.com";
+        String name2 = "Petras";
+        String email2 = "petras@mail.com";
+        String jonasToken = createTestUser(name1, email1);
+        String petrasToken = createTestUser(name2, email2);
+
+        User user1 = userRepository.findByEmail(email1).get();
+        User user2 = userRepository.findByEmail(email2).get();
+
+        Message message1 = createTestMessage(user1, user2, user1.getId());
+        Message message2 = createTestMessage(user1, user2, user1.getId());
+
+        mvc.perform(get("/getter/me/messages")
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
+        .andDo(print())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(2))))
+        .andExpect(jsonPath("$.content[0].id", is((int)message1.getId())))
+        .andExpect(jsonPath("$.content[1].id", is((int)message2.getId())))
+        .andExpect(status().isOk());
+    }
+
+    @Test
+    public void givenMessages_thenGetMessageByCurrentGetterIdAndMessageId()
+    throws Exception{
+        String name1 = "Jonas";
+        String email1 = "jonas@mail.com";
+        String name2 = "Petras";
+        String email2 = "petras@mail.com";
+        String jonasToken = createTestUser(name1, email1);
+        String petrasToken = createTestUser(name2, email2);
+
+        User user1 = userRepository.findByEmail(email1).get();
+        User user2 = userRepository.findByEmail(email2).get();
+
+        Message message1 = createTestMessage(user1, user2, user1.getId());
+        //Message message2 = createTestMessage(user1, user2, user1.getId());
+
+        mvc.perform(get("/getter/me/messages/"+message1.getId())
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
+        .andDo(print())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        //.andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(2))))
+        .andExpect(jsonPath("$.id", is((int)message1.getId())))
+        //.andExpect(jsonPath("$.content[1].id", is((int)message2.getId())))
+        .andExpect(status().isOk());
+    }
+
+    @Test
+    public void whenValid_thenAddMessageToGiver()
+    throws Exception{
+        String name1 = "Jonas";
+        String email1 = "jonas@mail.com";
+        String name2 = "Petras";
+        String email2 = "petras@mail.com";
+        String jonasToken = createTestUser(name1, email1);
+        String petrasToken = createTestUser(name2, email2);
+
+        User user1 = userRepository.findByEmail(email1).get();
+        User user2 = userRepository.findByEmail(email2).get();
+
+        Message message = new Message(0, "text1", new Date(), user1, user2, user1.getId());
+
+        MvcResult a = mvc.perform(post("/giver/"+user1.getId()+"/message/")
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken)
+        .content(JsonUtil.toJson(message)))
+        .andDo(print())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk()).andReturn();
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        Message responcemessage = objectMapper.readValue(a.getResponse().getContentAsString(), Message.class);
+        
+        List<Message> messages = messageRepository.findAll();
+        assertThat(messages).extracting("id").contains(responcemessage.getId());
+    }
+
+    @Test
+    public void whenValid_thenAddMessageToGiver_thenUserNotFound()
+    throws Exception{
+        String name1 = "Jonas";
+        String email1 = "jonas@mail.com";
+        String name2 = "Petras";
+        String email2 = "petras@mail.com";
+        String jonasToken = createTestUser(name1, email1);
+        String petrasToken = createTestUser(name2, email2);
+
+        User user1 = userRepository.findByEmail(email1).get();
+        User user2 = userRepository.findByEmail(email2).get();
+
+        Message message = new Message(0, "text1", new Date(), user1, user2, user1.getId());
+
+        MvcResult result = mvc.perform(post("/giver/"+151616+"/message/")
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken)
+        .content(JsonUtil.toJson(message)))
+        .andDo(print())
         .andReturn();
 
-        Optional<ResourceNotFoundException> e = 
-        Optional.ofNullable((ResourceNotFoundException) 
+        Optional<ResourceNotFoundException> e = Optional.ofNullable((ResourceNotFoundException) result.getResolvedException());
+        assertThat(e).isNotEmpty();
+        assertThat(e.get()).isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    public void whenValid_thenAddMessageToCurrentGiver()
+    throws Exception{
+        String name1 = "Jonas";
+        String email1 = "jonas@mail.com";
+        String name2 = "Petras";
+        String email2 = "petras@mail.com";
+        String jonasToken = createTestUser(name1, email1);
+        String petrasToken = createTestUser(name2, email2);
+
+        User user1 = userRepository.findByEmail(email1).get();
+        User user2 = userRepository.findByEmail(email2).get();
+
+        Message message = new Message(0, "text1", new Date(), user1, user2, user1.getId());
+
+        MvcResult a = mvc.perform(post("/giver/me/message/")
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken)
+        .content(JsonUtil.toJson(message)))
+        .andDo(print())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk()).andReturn();
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        Message responcemessage = objectMapper.readValue(a.getResponse().getContentAsString(), Message.class);
+        
+        List<Message> messages = messageRepository.findAll();
+        assertThat(messages).extracting("id").contains(responcemessage.getId());
+    }
+
+    @Test
+    public void whenValid_thenAddMessageToGetter()
+    throws Exception{
+        String name1 = "Jonas";
+        String email1 = "jonas@mail.com";
+        String name2 = "Petras";
+        String email2 = "petras@mail.com";
+        String jonasToken = createTestUser(name1, email1);
+        String petrasToken = createTestUser(name2, email2);
+
+        User user1 = userRepository.findByEmail(email1).get();
+        User user2 = userRepository.findByEmail(email2).get();
+
+        Message message = new Message(0, "text1", new Date(), user1, user2, user1.getId());
+
+        MvcResult a = mvc.perform(post("/getter/"+user1.getId()+"/message/")
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken)
+        .content(JsonUtil.toJson(message)))
+        .andDo(print())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk()).andReturn();
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        Message responcemessage = objectMapper.readValue(a.getResponse().getContentAsString(), Message.class);
+        
+        List<Message> messages = messageRepository.findAll();
+        assertThat(messages).extracting("id").contains(responcemessage.getId());
+    }
+
+    @Test
+    public void whenValid_thenAddMessageToGetter_UserNotFound()
+    throws Exception{
+        String name1 = "Jonas";
+        String email1 = "jonas@mail.com";
+        String name2 = "Petras";
+        String email2 = "petras@mail.com";
+        String jonasToken = createTestUser(name1, email1);
+        String petrasToken = createTestUser(name2, email2);
+
+        User user1 = userRepository.findByEmail(email1).get();
+        User user2 = userRepository.findByEmail(email2).get();
+
+        Message message = new Message(0, "text1", new Date(), user1, user2, user1.getId());
+
+        MvcResult result = mvc.perform(post("/getter/"+15125+"/message/")
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken)
+        .content(JsonUtil.toJson(message)))
+        .andDo(print())
+        .andReturn();
+
+        Optional<ResourceNotFoundException> e = Optional.ofNullable((ResourceNotFoundException) result.getResolvedException());
+        assertThat(e).isNotEmpty();
+        assertThat(e.get()).isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    public void whenValid_thenAddMessageToCurrentGetter()
+    throws Exception{
+        String name1 = "Jonas";
+        String email1 = "jonas@mail.com";
+        String name2 = "Petras";
+        String email2 = "petras@mail.com";
+        String jonasToken = createTestUser(name1, email1);
+        String petrasToken = createTestUser(name2, email2);
+
+        User user1 = userRepository.findByEmail(email1).get();
+        User user2 = userRepository.findByEmail(email2).get();
+
+        Message message = new Message(0, "text1", new Date(), user1, user2, user1.getId());
+
+        MvcResult a = mvc.perform(post("/getter/me/message/")
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken)
+        .content(JsonUtil.toJson(message)))
+        .andDo(print())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk()).andReturn();
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        Message responcemessage = objectMapper.readValue(a.getResponse().getContentAsString(), Message.class);
+        
+        List<Message> messages = messageRepository.findAll();
+        assertThat(messages).extracting("id").contains(responcemessage.getId());
+    }
+
+    
+    @Test
+    public void givenMessage_deleteMessage() throws Exception {
+        String name1 = "Jonas";
+        String email1 = "jonas@mail.com";
+        String name2 = "Petras";
+        String email2 = "petras@mail.com";
+        createTestUser(name1, email1);
+        String petrasToken = createTestUser(name2, email2);
+
+        User user1 = userRepository.findByEmail(email1).get();
+        User user2 = userRepository.findByEmail(email2).get();
+
+        Message message1 = createTestMessage(user1, user2, user1.getId());
+
+        
+        MvcResult result = mvc.perform(delete("/message/"+message1.getId())
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken))
+        .andDo(print())
+        .andExpect(status().isNoContent())
+        .andReturn();
+        
+        Optional<Message> message = messageRepository.findById(message1.getId());
+        assertThat(message).isEmpty();
+    }
+
+    @Test
+    public void givenMessage_deleteMessage_thenCantDelete() throws Exception {
+        String name1 = "Jonas";
+        String email1 = "jonas@mail.com";
+        String name2 = "Petras";
+        String email2 = "petras@mail.com";
+        createTestUser(name1, email1);
+        String petrasToken = createTestUser(name2, email2);
+
+        User user1 = userRepository.findByEmail(email1).get();
+        User user2 = userRepository.findByEmail(email2).get();
+
+        Message message1 = createTestMessage(user1, user2, user1.getId());
+
+        
+        MvcResult result = mvc.perform(delete("/message/"+1651515)
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken))
+        .andDo(print())
+        .andReturn();
+        
+        Optional<ResourceNotFoundException> e = Optional.ofNullable((ResourceNotFoundException) result.getResolvedException());
+        assertThat(e).isNotEmpty();
+        assertThat(e.get()).isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    public void givenMessage_deleteMessageByUserAndMessageId() throws Exception {
+        String name1 = "Jonas";
+        String email1 = "jonas@mail.com";
+        String name2 = "Petras";
+        String email2 = "petras@mail.com";
+        createTestUser(name1, email1);
+        String petrasToken = createTestUser(name2, email2);
+
+        User user1 = userRepository.findByEmail(email1).get();
+        User user2 = userRepository.findByEmail(email2).get();
+
+        Message message1 = createTestMessage(user1, user2, user1.getId());
+
+        
+        MvcResult result = 
+        mvc.perform(delete("/user/"+user1.getId()+"/message/"+message1.getId())
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken))
+        .andDo(print())
+        .andExpect(status().isNoContent())
+        .andReturn();
+        
+        Optional<Message> message = messageRepository.findById(message1.getId());
+        assertThat(message).isEmpty();
+    }
+
+    @Test
+    public void givenMessage_deleteMessageByUserAndMessageId_thenNotFound() throws Exception {
+        String name1 = "Jonas";
+        String email1 = "jonas@mail.com";
+        String name2 = "Petras";
+        String email2 = "petras@mail.com";
+        createTestUser(name1, email1);
+        String petrasToken = createTestUser(name2, email2);
+
+        User user1 = userRepository.findByEmail(email1).get();
+        User user2 = userRepository.findByEmail(email2).get();
+
+        Message message1 = createTestMessage(user1, user2, user1.getId());
+
+        
+        MvcResult result = 
+        mvc.perform(delete("/user/"+115661+"/message/"+message1.getId())
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken))
+        .andDo(print())
+        .andReturn();
+        
+        Optional<ResourceNotFoundException> e = Optional.ofNullable((ResourceNotFoundException) result.getResolvedException());
+        assertThat(e).isNotEmpty();
+        assertThat(e.get()).isInstanceOf(ResourceNotFoundException.class);
+
+    }
+
+    @Test
+    public void givenMessage_deleteMessageByCurrentUserAndMessageId() throws Exception {
+        String name1 = "Jonas";
+        String email1 = "jonas@mail.com";
+        String name2 = "Petras";
+        String email2 = "petras@mail.com";
+        createTestUser(name1, email1);
+        String petrasToken = createTestUser(name2, email2);
+
+        User user1 = userRepository.findByEmail(email1).get();
+        User user2 = userRepository.findByEmail(email2).get();
+
+        Message message1 = createTestMessage(user1, user2, user1.getId());
+
+        
+        MvcResult result = 
+        mvc.perform(delete("/user/me/message/"+message1.getId())
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken))
+        .andDo(print())
+        .andExpect(status().isNoContent())
+        .andReturn();
+        
+        Optional<Message> message = messageRepository.findById(message1.getId());
+        assertThat(message).isEmpty();
+    }
+
+    @Test
+    public void givenMessage_deleteMessageByCurrentUserAndMessageId_thenNotFound() throws Exception {
+        String name1 = "Jonas";
+        String email1 = "jonas@mail.com";
+        String name2 = "Petras";
+        String email2 = "petras@mail.com";
+        createTestUser(name1, email1);
+        String petrasToken = createTestUser(name2, email2);
+
+        User user1 = userRepository.findByEmail(email1).get();
+        User user2 = userRepository.findByEmail(email2).get();
+
+        Message message1 = createTestMessage(user1, user2, user1.getId());
+
+        
+        MvcResult result = 
+        mvc.perform(delete("/user/me/message/"+1241241)
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken))
+        .andDo(print())
+        .andReturn();
+        
+        Optional<ResourceNotFoundException> e = Optional.ofNullable((ResourceNotFoundException) result.getResolvedException());
+        assertThat(e).isNotEmpty();
+        assertThat(e.get()).isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    public void givenMessage_updateMessage() throws Exception {
+        String name1 = "Jonas";
+        String email1 = "jonas@mail.com";
+        String name2 = "Petras";
+        String email2 = "petras@mail.com";
+        createTestUser(name1, email1);
+        String petrasToken = createTestUser(name2, email2);
+
+        User user1 = userRepository.findByEmail(email1).get();
+        User user2 = userRepository.findByEmail(email2).get();
+
+        Message message = createTestMessage(user1, user2, user1.getId());
+        message.setText("updated message");
+        
+        mvc.perform(put("/message/"+message.getId())
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken)
+        .content(JsonUtil.toJson(message)))
+        .andDo(print())
+        .andExpect(status().isNoContent());
+        
+        List<Message> Messages =
+        messageRepository.findAll();
+        assertThat(Messages).extracting("text")
+        .containsOnly("updated message");
+    }
+
+    @Test
+    public void givenMessage_updateMessage_nulls() throws Exception {
+        String name1 = "Jonas";
+        String email1 = "jonas@mail.com";
+        String name2 = "Petras";
+        String email2 = "petras@mail.com";
+        createTestUser(name1, email1);
+        String petrasToken = createTestUser(name2, email2);
+
+        User user1 = userRepository.findByEmail(email1).get();
+        User user2 = userRepository.findByEmail(email2).get();
+
+        Message message = createTestMessage(user1, user2, user1.getId());
+        Long savedId = message.getId();
+        message.setId(0);
+        message.setText("");
+        message.setGetter(null);
+        message.setGiver(null);
+        message.setDate(null);
+        
+        mvc.perform(put("/message/"+savedId)
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken)
+        .content(JsonUtil.toJson(message)))
+        .andDo(print())
+        .andExpect(status().isNoContent());
+    }
+
+    @Test
+    public void givenMessage_updateMessage_thenNotFound() throws Exception {
+        String name1 = "Jonas";
+        String email1 = "jonas@mail.com";
+        String name2 = "Petras";
+        String email2 = "petras@mail.com";
+        createTestUser(name1, email1);
+        String petrasToken = createTestUser(name2, email2);
+
+        User user1 = userRepository.findByEmail(email1).get();
+        User user2 = userRepository.findByEmail(email2).get();
+
+        Message message = createTestMessage(user1, user2, user1.getId());
+        message.setText("updated message");
+        
+        MvcResult result = mvc.perform(put("/message/"+121241)
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken)
+        .content(JsonUtil.toJson(message)))
+        .andDo(print())
+        .andReturn();
+        
+        Optional<ResourceNotFoundException> e 
+        = Optional.ofNullable((ResourceNotFoundException) 
         result.getResolvedException());
         assertThat(e).isNotEmpty();
         assertThat(e.get())
-        .isInstanceOf(Exception.class);
-    }
+        .isInstanceOf(ResourceNotFoundException.class);
 
-
-
-
-    
-    @Test
-    public void givenDeposite_whenGetDepositeByDebtId_thenStatus200() throws Exception {
-        String name1 = "Jonas";
-        String email1 = "jonas@mail.com";
-        String name2 = "Petras";
-        String email2 = "petras@mail.com";
-        String jonasToken = createTestUser(name1, email1);
-        createTestUser(name2, email2);
-
-        User user1 = userRepository.findByEmail(email1).get();
-        User user2 = userRepository.findByEmail(email2).get();
-
-        Debt debt1 = createTestDebt(user1, user2);
-
-        Deposite deposite1 = createTestDeposite(debt1);
-        
-        mvc.perform(get("/debt/"+debt1.getId()+"/deposite").contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
-        .andDo(print())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.id", is((int)deposite1.getId())))
-        .andExpect(status().isOk());
-    }
-
-    @Test(expected = Exception.class)
-    public void givenDeposite_whenGetDepositeByDebtId_thenDepositeNotFound() throws Exception {
-        String name1 = "Jonas";
-        String email1 = "jonas@mail.com";
-        String name2 = "Petras";
-        String email2 = "petras@mail.com";
-        String jonasToken = createTestUser(name1, email1);
-        createTestUser(name2, email2);
-
-        User user1 = userRepository.findByEmail(email1).get();
-        User user2 = userRepository.findByEmail(email2).get();
-
-        Debt debt1 = createTestDebt(user1, user2);
-
-        Deposite deposite1 = createTestDeposite(debt1);
-        
-        mvc.perform(get("/debt/"+161651+"/deposite").contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
-        .andDo(print())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.id", is((int)deposite1.getId())));
-    }
-
-    @Test
-    public void givenDeposite_whenGetDepositeByDebtIdandCurrentUser_thenStatus200() throws Exception {
-        String name1 = "Jonas";
-        String email1 = "jonas@mail.com";
-        String name2 = "Petras";
-        String email2 = "petras@mail.com";
-        String jonasToken = createTestUser(name1, email1);
-        createTestUser(name2, email2);
-
-        User user1 = userRepository.findByEmail(email1).get();
-        User user2 = userRepository.findByEmail(email2).get();
-
-        Debt debt1 = createTestDebt(user1, user2);
-
-        Deposite deposite1 = createTestDeposite(debt1);
-        
-        mvc.perform(get("/user/me/debt/"+debt1.getId()+"/deposite")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
-        .andDo(print())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.id", is((int)deposite1.getId())))
-        .andExpect(status().isOk());
-    }
-
-
-    @Test(expected = Exception.class)
-    public void givenDeposite_whenGetDepositeByDebtIdandCurrentUser_thenDepositeNotFound() throws Exception {
-        String name1 = "Jonas";
-        String email1 = "jonas@mail.com";
-        String name2 = "Petras";
-        String email2 = "petras@mail.com";
-        String jonasToken = createTestUser(name1, email1);
-        createTestUser(name2, email2);
-
-        User user1 = userRepository.findByEmail(email1).get();
-        User user2 = userRepository.findByEmail(email2).get();
-
-        Debt debt1 = createTestDebt(user1, user2);
-
-        Deposite deposite1 = createTestDeposite(debt1);
-        
-        mvc.perform(get("/user/me/debt/"+1561611+"/deposite")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
-        .andDo(print())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.id", is((int)deposite1.getId())))
-        .andExpect(status().isOk());
-    }
-
-    @Test
-    public void givenDeposite_whenGetDepositeByAssetIdandCurrentUser_thenStatus200() throws Exception {
-        String name1 = "Jonas";
-        String email1 = "jonas@mail.com";
-        String name2 = "Petras";
-        String email2 = "petras@mail.com";
-        createTestUser(name1, email1);
-        String petrasToken = createTestUser(name2, email2);
-
-        User user1 = userRepository.findByEmail(email1).get();
-        User user2 = userRepository.findByEmail(email2).get();
-
-        Debt debt1 = createTestDebt(user1, user2);
-
-        Deposite deposite1 = createTestDeposite(debt1);
-        
-        mvc.perform(get("/user/me/asset/"+debt1.getId()+"/deposite")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken))
-        .andDo(print())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.id", is((int)deposite1.getId())))
-        .andExpect(status().isOk());
-    }
-
-    @Test(expected = Exception.class)
-    public void givenDeposite_whenGetDepositeByAssetIdandCurrentUser_thenDepositeNotFound() throws Exception {
-        String name1 = "Jonas";
-        String email1 = "jonas@mail.com";
-        String name2 = "Petras";
-        String email2 = "petras@mail.com";
-        createTestUser(name1, email1);
-        String petrasToken = createTestUser(name2, email2);
-
-        User user1 = userRepository.findByEmail(email1).get();
-        User user2 = userRepository.findByEmail(email2).get();
-
-        Debt debt1 = createTestDebt(user1, user2);
-
-        Deposite deposite1 = createTestDeposite(debt1);
-        
-        mvc.perform(get("/user/me/asset/"+468461515+"/deposite")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken))
-        .andDo(print())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.id", is((int)deposite1.getId())));
-    }
-
-    @Test
-    public void whenValid_createDepositeByDebtId() throws Exception {
-        String name1 = "Jonas";
-        String email1 = "jonas@mail.com";
-        String name2 = "Petras";
-        String email2 = "petras@mail.com";
-        createTestUser(name1, email1);
-        String petrasToken = createTestUser(name2, email2);
-
-        User user1 = userRepository.findByEmail(email1).get();
-        User user2 = userRepository.findByEmail(email2).get();
-
-        Debt debt1 = createTestDebt(user1, user2);
-
-        Deposite deposite1 = new Deposite("deposite1", "description1");
-
-        
-        MvcResult result = mvc.perform(post("/debt/"+debt1.getId()+"/deposite")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken)
-        .content(JsonUtil.toJson(deposite1)))
-        .andDo(print())
-        .andExpect(status().isCreated())
-        .andReturn();
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        Deposite responcedDeposite = objectMapper.readValue(result.getResponse().getContentAsString(), Deposite.class);
-        
-        List<Deposite> deposites = depositeRepository.findAll();
-        assertThat(deposites).extracting("id").contains(responcedDeposite.getId());
-    }
-
-    @Test
-    public void whenValid_createDepositeByDebtId_thenResourceNotFound() throws Exception {
-        String name1 = "Jonas";
-        String email1 = "jonas@mail.com";
-        String name2 = "Petras";
-        String email2 = "petras@mail.com";
-        createTestUser(name1, email1);
-        String petrasToken = createTestUser(name2, email2);
-
-        User user1 = userRepository.findByEmail(email1).get();
-        User user2 = userRepository.findByEmail(email2).get();
-
-        Debt debt1 = createTestDebt(user1, user2);
-
-        Deposite deposite1 = new Deposite("deposite1", "description1");
-
-        
-        MvcResult result = mvc.perform(post("/debt/"+141451+"/deposite")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken)
-        .content(JsonUtil.toJson(deposite1)))
-        .andDo(print())
-        .andReturn();
-
-        Optional<ResourceNotFoundException> e = Optional.ofNullable((ResourceNotFoundException) result.getResolvedException());
-        assertThat(e).isNotEmpty();
-        assertThat(e.get()).isInstanceOf(ResourceNotFoundException.class);
-    }
-
-    @Test
-    public void whenValid_createDepositeByDebtIdofCurrentUser() throws Exception {
-        String name1 = "Jonas";
-        String email1 = "jonas@mail.com";
-        String name2 = "Petras";
-        String email2 = "petras@mail.com";
-        createTestUser(name1, email1);
-        String petrasToken = createTestUser(name2, email2);
-
-        User user1 = userRepository.findByEmail(email1).get();
-        User user2 = userRepository.findByEmail(email2).get();
-
-        Debt debt1 = createTestDebt(user1, user2);
-
-        Deposite deposite1 = new Deposite("deposite1", "description1");
-
-        
-        MvcResult result = mvc.perform(post("/user/me/debt/"+debt1.getId()+"/deposite")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken)
-        .content(JsonUtil.toJson(deposite1)))
-        .andDo(print())
-        .andExpect(status().isCreated())
-        .andReturn();
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        Deposite responcedDeposite = objectMapper.readValue(result.getResponse().getContentAsString(), Deposite.class);
-        
-        List<Deposite> deposites = depositeRepository.findAll();
-        assertThat(deposites).extracting("id").contains(responcedDeposite.getId());
-    }
-
-    @Test
-    public void whenValid_createDepositeByDebtIdofCurrentUser_thenResourceNotFound()
-    throws Exception {
-        String name1 = "Jonas";
-        String email1 = "jonas@mail.com";
-        String name2 = "Petras";
-        String email2 = "petras@mail.com";
-        createTestUser(name1, email1);
-        String petrasToken = createTestUser(name2, email2);
-
-        User user1 = userRepository.findByEmail(email1).get();
-        User user2 = userRepository.findByEmail(email2).get();
-
-        Debt debt1 = createTestDebt(user1, user2);
-
-        Deposite deposite1 = new Deposite("deposite1", "description1");
-
-        
-        MvcResult result = mvc.perform(post("/user/me/debt/"+1412541+"/deposite")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken)
-        .content(JsonUtil.toJson(deposite1)))
-        .andDo(print())
-        .andReturn();
-
-        Optional<ResourceNotFoundException> e = Optional.ofNullable((ResourceNotFoundException) result.getResolvedException());
-        assertThat(e).isNotEmpty();
-        assertThat(e.get()).isInstanceOf(ResourceNotFoundException.class);
-    }
-
-    @Test
-    public void whenValid_createDeposite() throws Exception {
-        String name1 = "Jonas";
-        String email1 = "jonas@mail.com";
-        String jonasToken = createTestUser(name1, email1);
-
-        Deposite deposite1 = new Deposite("deposite1", "description1");
-
-        
-        MvcResult result = mvc.perform(post("/deposite")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken)
-        .content(JsonUtil.toJson(deposite1)))
-        .andDo(print())
-        .andExpect(status().isCreated())
-        .andReturn();
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        Deposite responcedDeposite = objectMapper.readValue(result.getResponse().getContentAsString(), Deposite.class);
-        
-        List<Deposite> deposites = depositeRepository.findAll();
-        assertThat(deposites).extracting("id").contains(responcedDeposite.getId());
-    }
-
-    @Test
-    public void givenDeposite_deleteDeposite() throws Exception {
-        String name1 = "Jonas";
-        String email1 = "jonas@mail.com";
-        String name2 = "Petras";
-        String email2 = "petras@mail.com";
-        createTestUser(name1, email1);
-        String petrasToken = createTestUser(name2, email2);
-
-        User user1 = userRepository.findByEmail(email1).get();
-        User user2 = userRepository.findByEmail(email2).get();
-
-        Debt debt = createTestDebt(user1, user2);
-
-        Deposite deposite1 = createTestDeposite(debt);
-
-        
-        MvcResult result = mvc.perform(delete("/deposite/"+deposite1.getId())
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken))
-        .andDo(print())
-        .andExpect(status().isOk())
-        .andReturn();
-        
-        Optional<Deposite> deposites = depositeRepository.findById(deposite1.getId());
-        assertThat(deposites).isEmpty();
-    }
-
-    @Test(expected = Exception.class)
-    public void givenDeposite_deleteDeposite_thenDepositeNotFound() throws Exception {
-        String name1 = "Jonas";
-        String email1 = "jonas@mail.com";
-        String name2 = "Petras";
-        String email2 = "petras@mail.com";
-        createTestUser(name1, email1);
-        String petrasToken = createTestUser(name2, email2);
-
-        User user1 = userRepository.findByEmail(email1).get();
-        User user2 = userRepository.findByEmail(email2).get();
-
-        Debt debt = createTestDebt(user1, user2);
-
-        Deposite deposite1 = createTestDeposite(debt);
-
-        
-        MvcResult result = mvc.perform(delete("/deposite/"+11651)
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken))
-        .andDo(print())
-        .andReturn();
-    }
-
-    @Test
-    public void givenDeposite_deleteDepositeNotInDebt() throws Exception {
-        String name1 = "Jonas";
-        String email1 = "jonas@mail.com";
-        String name2 = "Petras";
-        String email2 = "petras@mail.com";
-        createTestUser(name1, email1);
-        String petrasToken = createTestUser(name2, email2);
-
-        User user1 = userRepository.findByEmail(email1).get();
-        User user2 = userRepository.findByEmail(email2).get();
-
-        Deposite deposite1 = createTestDeposite();
-
-        
-        MvcResult result = mvc.perform(delete("/deposite/"+deposite1.getId())
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken))
-        .andDo(print())
-        .andExpect(status().isOk())
-        .andReturn();
-        
-        Optional<Deposite> deposites = depositeRepository.findById(deposite1.getId());
-        assertThat(deposites).isEmpty();
-    }
-
-    @Test
-    public void givenDeposite_deleteDepositebyDebtId()
-    throws Exception {
-        String name1 = "Jonas";
-        String email1 = "jonas@mail.com";
-        String name2 = "Petras";
-        String email2 = "petras@mail.com";
-        createTestUser(name1, email1);
-        String petrasToken = createTestUser(name2, email2);
-
-        User user1 = userRepository.findByEmail(email1).get();
-        User user2 = userRepository.findByEmail(email2).get();
-
-        Debt debt = createTestDebt(user1, user2);
-
-        Deposite deposite1 = createTestDeposite(debt);
-
-        
-        MvcResult result = 
-        mvc.perform(delete("/debt/"+debt.getId()+"/deposite/")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken))
-        .andDo(print())
-        .andExpect(status().isOk())
-        .andReturn();
-        
-        Optional<Deposite> deposites = 
-        depositeRepository.findById(deposite1.getId());
-        assertThat(deposites).isEmpty();
-    }
-
-    @Test(expected = Exception.class)
-    public void givenDeposite_deleteDepositebyDebtId_thenDebtNotFound()
-    throws Exception {
-        String name1 = "Jonas";
-        String email1 = "jonas@mail.com";
-        String name2 = "Petras";
-        String email2 = "petras@mail.com";
-        createTestUser(name1, email1);
-        String petrasToken = createTestUser(name2, email2);
-
-        User user1 = userRepository.findByEmail(email1).get();
-        User user2 = userRepository.findByEmail(email2).get();
-
-        Debt debt = createTestDebt(user1, user2);
-
-        Deposite deposite1 = createTestDeposite(debt);
-
-        
-        MvcResult result = 
-        mvc.perform(delete("/debt/"+161651+"/deposite/")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken))
-        .andDo(print())
-        .andExpect(status().isOk())
-        .andReturn();
-        
-        Optional<Deposite> deposites = 
-        depositeRepository.findById(deposite1.getId());
-        assertThat(deposites).isEmpty();
-    }
-
-    @Test(expected = Exception.class)
-    public void givenDeposite_deleteDepositebyDebtId_thenDontHaveDeposite()
-    throws Exception {
-        String name1 = "Jonas";
-        String email1 = "jonas@mail.com";
-        String name2 = "Petras";
-        String email2 = "petras@mail.com";
-        createTestUser(name1, email1);
-        String petrasToken = createTestUser(name2, email2);
-
-        User user1 = userRepository.findByEmail(email1).get();
-        User user2 = userRepository.findByEmail(email2).get();
-
-        Debt debt = createTestDebt(user1, user2);
-
-        Deposite deposite1 = createTestDeposite();
-
-        
-        MvcResult result = 
-        mvc.perform(delete("/debt/"+debt.getId()+"/deposite/")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken))
-        .andDo(print())
-        .andExpect(status().isOk())
-        .andReturn();
-        
-        Optional<Deposite> deposites = 
-        depositeRepository.findById(deposite1.getId());
-        assertThat(deposites).isEmpty();
     }
 
     
-
     @Test
-    public void givenDeposite_deleteDepositebyCurrentUserDebtId()
-    throws Exception {
+    public void givenMessage_updateMessageByUserIdAndMessageId() throws Exception {
         String name1 = "Jonas";
         String email1 = "jonas@mail.com";
         String name2 = "Petras";
@@ -660,178 +758,24 @@ public class DepositeControllerTest {
         User user1 = userRepository.findByEmail(email1).get();
         User user2 = userRepository.findByEmail(email2).get();
 
-        Debt debt = createTestDebt(user1, user2);
-
-        Deposite deposite1 = createTestDeposite(debt);
-
+        Message message = createTestMessage(user1, user2, user1.getId());
+        message.setText("updated message");
         
-        mvc.perform(delete("/user/me/debt/"+debt.getId()+"/deposite/")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken))
-        .andDo(print())
-        .andExpect(status().isOk())
-        .andReturn();
-        
-        Optional<Deposite> deposites = 
-        depositeRepository.findById(deposite1.getId());
-        assertThat(deposites).isEmpty();
-    }
-
-    @Test
-    public void givenDeposite_deleteDepositebyCurrentUserDebtIdgetter()
-    throws Exception {
-        String name1 = "Jonas";
-        String email1 = "jonas@mail.com";
-        String name2 = "Petras";
-        String email2 = "petras@mail.com";
-        createTestUser(name1, email1);
-        String petrasToken = createTestUser(name2, email2);
-
-        User user1 = userRepository.findByEmail(email1).get();
-        User user2 = userRepository.findByEmail(email2).get();
-
-        Debt debt = createTestDebt(user2, user1);
-
-        Deposite deposite1 = createTestDeposite(debt);
-
-        
-        mvc.perform(delete("/user/me/debt/"+debt.getId()+"/deposite/")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken))
-        .andDo(print())
-        .andExpect(status().isOk())
-        .andReturn();
-        
-        Optional<Deposite> deposites = 
-        depositeRepository.findById(deposite1.getId());
-        assertThat(deposites).isEmpty();
-    }
-
-    @Test
-    public void givenDeposite_deleteDepositebyCurrentUserDebtId_thenDebtNotFound()
-    throws Exception {
-        String name1 = "Jonas";
-        String email1 = "jonas@mail.com";
-        String name2 = "Petras";
-        String email2 = "petras@mail.com";
-        createTestUser(name1, email1);
-        String petrasToken = createTestUser(name2, email2);
-
-        User user1 = userRepository.findByEmail(email1).get();
-        User user2 = userRepository.findByEmail(email2).get();
-
-        Debt debt = createTestDebt(user1, user2);
-
-        Deposite deposite1 = createTestDeposite(debt);
-
-        
-        MvcResult result = mvc.perform(delete("/user/me/debt/"+1231241+"/deposite/")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken))
-        .andDo(print())
-        .andReturn();
-        
-        Optional<ResourceNotFoundException> e = 
-        Optional.ofNullable((ResourceNotFoundException) result.getResolvedException());
-        assertThat(e).isNotEmpty();
-        assertThat(e.get()).isInstanceOf(ResourceNotFoundException.class);
-    }
-
-    @Test
-    public void givenDeposite_deleteDepositebyCurrentUserDebtId_thenDebtNotFoundGetter()
-    throws Exception {
-        String name1 = "Jonas";
-        String email1 = "jonas@mail.com";
-        String name2 = "Petras";
-        String email2 = "petras@mail.com";
-        createTestUser(name1, email1);
-        String petrasToken = createTestUser(name2, email2);
-
-        User user1 = userRepository.findByEmail(email1).get();
-        User user2 = userRepository.findByEmail(email2).get();
-
-        Debt debt = createTestDebt(user2, user1);
-
-        Deposite deposite1 = createTestDeposite(debt);
-
-        
-        MvcResult result = mvc.perform(delete("/user/me/debt/"+1231241+"/deposite/")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken))
-        .andDo(print())
-        .andReturn();
-        
-        Optional<ResourceNotFoundException> e = 
-        Optional.ofNullable((ResourceNotFoundException) result.getResolvedException());
-        assertThat(e).isNotEmpty();
-        assertThat(e.get()).isInstanceOf(ResourceNotFoundException.class);
-    }
-
-    @Test
-    public void givenDeposite_deleteDepositebyCurrentUserDebtId_thenDontHaveDeposite()
-    throws Exception {
-        String name1 = "Jonas";
-        String email1 = "jonas@mail.com";
-        String name2 = "Petras";
-        String email2 = "petras@mail.com";
-        createTestUser(name1, email1);
-        String petrasToken = createTestUser(name2, email2);
-
-        User user1 = userRepository.findByEmail(email1).get();
-        User user2 = userRepository.findByEmail(email2).get();
-
-        Debt debt = createTestDebt(user1, user2);
-
-        Deposite deposite1 = createTestDeposite();
-
-        
-        MvcResult result = mvc.perform(delete("/user/me/debt/"+debt.getId()+"/deposite/")
+        mvc.perform(put("/user/"+user1.getId()+"/message/"+message.getId())
         .contentType(MediaType.APPLICATION_JSON)
         .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken)
-        .content(JsonUtil.toJson(deposite1)))
+        .content(JsonUtil.toJson(message)))
         .andDo(print())
-        .andReturn();
+        .andExpect(status().isOk());
         
-        Optional<ResourceNotFoundException> e = 
-        Optional.ofNullable((ResourceNotFoundException) result.getResolvedException());
-        assertThat(e).isNotEmpty();
-        assertThat(e.get()).isInstanceOf(ResourceNotFoundException.class);
-    }
-
-
-
-   @Test
-    public void givenDeposite_updateDeposite() throws Exception {
-        String name1 = "Jonas";
-        String email1 = "jonas@mail.com";
-        String name2 = "Petras";
-        String email2 = "petras@mail.com";
-        createTestUser(name1, email1);
-        String petrasToken = createTestUser(name2, email2);
-
-        User user1 = userRepository.findByEmail(email1).get();
-        User user2 = userRepository.findByEmail(email2).get();
-
-        Debt debt = createTestDebt(user1, user2);
-        
-        Deposite deposite1 = createTestDeposite(debt);
-        deposite1.setDescription("updated description");
-        
-        mvc.perform(put("/deposite/"+deposite1.getId())
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken)
-        .content(JsonUtil.toJson(deposite1)))
-        .andDo(print())
-        .andExpect(status().isNoContent());
-        
-        List<Deposite> deposites =
-        depositeRepository.findAll();
-        assertThat(deposites).extracting("description")
-        .containsOnly("updated description");
+        List<Message> messages =
+        messageRepository.findAll();
+        assertThat(messages).extracting("text")
+        .containsOnly("updated message");
     }
 
     @Test
-    public void givenDeposite_updateDeposite_whenDepositeNotFound() throws Exception {
+    public void givenMessage_updateMessageByUserIdAndMessageId_nulls() throws Exception {
         String name1 = "Jonas";
         String email1 = "jonas@mail.com";
         String name2 = "Petras";
@@ -842,26 +786,54 @@ public class DepositeControllerTest {
         User user1 = userRepository.findByEmail(email1).get();
         User user2 = userRepository.findByEmail(email2).get();
 
-        Debt debt = createTestDebt(user1, user2);
+        Message message = createTestMessage(user1, user2, user1.getId());
+        Long savedId = message.getId();
+        message.setId(0);
+        message.setText("");
+        message.setGetter(null);
+        message.setGiver(null);
+        message.setDate(null);
         
-        Deposite deposite1 = createTestDeposite(debt);
-        deposite1.setDescription("updated description");
-        
-        MvcResult result = mvc.perform(put("/deposite/"+514512)
+        mvc.perform(put("/user/"+user1.getId()+"/message/"+savedId)
         .contentType(MediaType.APPLICATION_JSON)
         .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken)
-        .content(JsonUtil.toJson(deposite1)))
+        .content(JsonUtil.toJson(message)))
+        .andDo(print())
+        .andExpect(status().isOk());
+    
+    }
+
+    @Test
+    public void givenMessage_updateMessageByUserIdAndMessageId_thenNotFound() throws Exception {
+        String name1 = "Jonas";
+        String email1 = "jonas@mail.com";
+        String name2 = "Petras";
+        String email2 = "petras@mail.com";
+        createTestUser(name1, email1);
+        String petrasToken = createTestUser(name2, email2);
+
+        User user1 = userRepository.findByEmail(email1).get();
+        User user2 = userRepository.findByEmail(email2).get();
+
+        Message message = createTestMessage(user1, user2, user1.getId());
+        message.setText("updated message");
+        
+        MvcResult result = mvc.perform(put("/user/"+124124+"/message/"+message.getId())
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken)
+        .content(JsonUtil.toJson(message)))
         .andDo(print()).andReturn();
         
-        Optional<ResourceNotFoundException> e = 
-        Optional.ofNullable((ResourceNotFoundException) result.getResolvedException());
+        Optional<ResourceNotFoundException> e 
+        = Optional.ofNullable((ResourceNotFoundException) 
+        result.getResolvedException());
         assertThat(e).isNotEmpty();
-        assertThat(e.get()).isInstanceOf(ResourceNotFoundException.class);
+        assertThat(e.get())
+        .isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test
-    public void givenDeposite_updateCurrentUserDepositeByDebtId() 
-    throws Exception {
+    public void givenMessage_updateMessageByUserIdAndMessageId_thenMessageNotFound() throws Exception {
         String name1 = "Jonas";
         String email1 = "jonas@mail.com";
         String name2 = "Petras";
@@ -872,27 +844,53 @@ public class DepositeControllerTest {
         User user1 = userRepository.findByEmail(email1).get();
         User user2 = userRepository.findByEmail(email2).get();
 
-        Debt debt = createTestDebt(user1, user2);
+        Message message = createTestMessage(user1, user2, user1.getId());
+        message.setText("updated message");
         
-        Deposite deposite1 = createTestDeposite(debt);
-        deposite1.setDescription("updated description");
-        
-        mvc.perform(put("/user/me/debt/"+debt.getId()+"/deposite/")
+        MvcResult result = mvc.perform(put("/user/"+user1.getId()+"/message/"+124124)
         .contentType(MediaType.APPLICATION_JSON)
         .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken)
-        .content(JsonUtil.toJson(deposite1)))
+        .content(JsonUtil.toJson(message)))
+        .andDo(print()).andReturn();
+        
+        Optional<ResourceNotFoundException> e 
+        = Optional.ofNullable((ResourceNotFoundException) 
+        result.getResolvedException());
+        assertThat(e).isNotEmpty();
+        assertThat(e.get())
+        .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    public void givenMessage_updateMessageByCurrentUserIdAndMessageId() throws Exception {
+        String name1 = "Jonas";
+        String email1 = "jonas@mail.com";
+        String name2 = "Petras";
+        String email2 = "petras@mail.com";
+        createTestUser(name1, email1);
+        String petrasToken = createTestUser(name2, email2);
+
+        User user1 = userRepository.findByEmail(email1).get();
+        User user2 = userRepository.findByEmail(email2).get();
+
+        Message message = createTestMessage(user1, user2, user1.getId());
+        message.setText("updated message");
+        
+        mvc.perform(put("/user/me/message/"+message.getId())
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken)
+        .content(JsonUtil.toJson(message)))
         .andDo(print())
-        .andExpect(status().isNoContent());
+        .andExpect(status().isOk());
         
-        List<Deposite> deposites =
-        depositeRepository.findAll();
-        assertThat(deposites).extracting("description")
-        .containsOnly("updated description");
+        List<Message> Messages =
+        messageRepository.findAll();
+        assertThat(Messages).extracting("text")
+        .containsOnly("updated message");
     }
 
     @Test
-    public void givenDeposite_updateCurrentUserDepositeByDebtId_thenDontHaveDeposite() 
-    throws Exception {
+    public void givenMessage_updateMessageByCurrentUserIdAndMessageId_nulls() throws Exception {
         String name1 = "Jonas";
         String email1 = "jonas@mail.com";
         String name2 = "Petras";
@@ -903,26 +901,25 @@ public class DepositeControllerTest {
         User user1 = userRepository.findByEmail(email1).get();
         User user2 = userRepository.findByEmail(email2).get();
 
-        Debt debt = createTestDebt(user1, user2);
+        Message message = createTestMessage(user1, user2, user1.getId());
+        Long messageId = message.getId();
+        message.setId(0);
+        message.setText("");
+        message.setDebt_getter(null);
+        message.setDebt_giver(null);
+        message.setDate(null);
         
-        Deposite deposite1 = createTestDeposite();
-        deposite1.setDescription("updated description");
-        
-        MvcResult result = mvc.perform(put("/user/me/debt/"+debt.getId()+"/deposite/")
+        mvc.perform(put("/user/me/message/"+messageId)
         .contentType(MediaType.APPLICATION_JSON)
         .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken)
-        .content(JsonUtil.toJson(deposite1)))
-        .andDo(print()).andReturn();
-        
-        Optional<ResourceNotFoundException> e = 
-        Optional.ofNullable((ResourceNotFoundException) result.getResolvedException());
-        assertThat(e).isNotEmpty();
-        assertThat(e.get()).isInstanceOf(ResourceNotFoundException.class);
+        .content(JsonUtil.toJson(message)))
+        .andDo(print())
+        .andExpect(status().isOk());
     }
 
+
     @Test
-    public void givenDeposite_updateCurrentUserDepositeByDebtId_thenDebtNotFound() 
-    throws Exception {
+    public void givenMessage_updateMessageByCurrentUserIdAndMessageId_thenNotFound() throws Exception {
         String name1 = "Jonas";
         String email1 = "jonas@mail.com";
         String name2 = "Petras";
@@ -933,56 +930,25 @@ public class DepositeControllerTest {
         User user1 = userRepository.findByEmail(email1).get();
         User user2 = userRepository.findByEmail(email2).get();
 
-        Debt debt = createTestDebt(user1, user2);
+        Message message = createTestMessage(user1, user2, user1.getId());
+        message.setText("updated message");
         
-        Deposite deposite1 = createTestDeposite(debt);
-        deposite1.setDescription("updated description");
-        
-        MvcResult result = mvc.perform(put("/user/me/debt/"+124141+"/deposite/")
+        MvcResult result = mvc.perform(put("/user/me/message/"+123141)
         .contentType(MediaType.APPLICATION_JSON)
         .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken)
-        .content(JsonUtil.toJson(deposite1)))
-        .andDo(print()).andReturn();
+        .content(JsonUtil.toJson(message)))
+        .andDo(print())
+        .andReturn();
         
-        Optional<ResourceNotFoundException> e = 
-        Optional.ofNullable((ResourceNotFoundException) result.getResolvedException());
+        Optional<ResourceNotFoundException> e 
+        = Optional.ofNullable((ResourceNotFoundException) 
+        result.getResolvedException());
         assertThat(e).isNotEmpty();
-        assertThat(e.get()).isInstanceOf(ResourceNotFoundException.class);
+        assertThat(e.get())
+        .isInstanceOf(ResourceNotFoundException.class);
     }
 
-    @Test
-    public void givenDeposite_updateCurrentUserDepositeByDebtId_thenDebtNotFoundgetter() 
-    throws Exception {
-        String name1 = "Jonas";
-        String email1 = "jonas@mail.com";
-        String name2 = "Petras";
-        String email2 = "petras@mail.com";
-        createTestUser(name1, email1);
-        String petrasToken = createTestUser(name2, email2);
-
-        User user1 = userRepository.findByEmail(email1).get();
-        User user2 = userRepository.findByEmail(email2).get();
-
-        Debt debt = createTestDebt(user2, user1);
-        
-        Deposite deposite1 = createTestDeposite(debt);
-        deposite1.setDescription("updated description");
-        
-        MvcResult result = mvc.perform(put("/user/me/debt/"+124141+"/deposite/")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken)
-        .content(JsonUtil.toJson(deposite1)))
-        .andDo(print()).andReturn();
-        
-        Optional<ResourceNotFoundException> e = 
-        Optional.ofNullable((ResourceNotFoundException) result.getResolvedException());
-        assertThat(e).isNotEmpty();
-        assertThat(e.get()).isInstanceOf(ResourceNotFoundException.class);
-    }
-
-
-
-
+    //Not unit test _____________________________________________________
     protected String createTestUser(String username, String email){
         User user = new User(new Long(123), username, email, "12345", new Date(), "", "123", UserRole.ROLE_ADMIN);
         user.setProvider(AuthProvider.local);
@@ -1002,24 +968,9 @@ public class DepositeControllerTest {
         return accessToken;
     }
 
-    protected Debt createTestDebt(User getter, User giver){
-        Debt debt = new Debt(0, 100, getter, giver, null);
-        debt = debtRepository.saveAndFlush(debt);
-        return debt;
-    }
-
-    protected Deposite createTestDeposite(Debt debt){
-        Deposite deposite = new Deposite("deposite1", "description");
-        deposite = depositeRepository.saveAndFlush(deposite);
-        Debt debtresume = debtRepository.findById(debt.getId()).get();
-        debtresume.setDeposite(deposite);
-        debtRepository.saveAndFlush(debtresume);
-        return deposite;
-    }
-
-    protected Deposite createTestDeposite(){
-        Deposite deposite = new Deposite("deposite1", "description");
-        deposite = depositeRepository.saveAndFlush(deposite);
-        return deposite;
+    protected Message createTestMessage(User getter, User giver, Long owner){
+        Message message = new Message(0, "message1", new Date(), getter, giver, owner);
+        message = messageRepository.saveAndFlush(message);
+        return message;
     }
 }
