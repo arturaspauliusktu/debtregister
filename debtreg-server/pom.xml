@@ -16,6 +16,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <start-class>debtreg.App</start-class>
@@ -25,8 +26,17 @@
         <rest.assured.version>2.3.3</rest.assured.version>
         <spring-loaded.version>1.2.0.RELEASE</spring-loaded.version>
     </properties>
+        <dependencies>
+                <!--
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>2.1.0</version>
+            <scope>test</scope>
+        </dependency>
+        -->
 
-    <dependencies>
+
         <dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -96,10 +106,33 @@
 			<artifactId>jjwt</artifactId>
 			<version>0.5.1</version>
 		</dependency>
-        
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>RELEASE</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
     <build>
         <plugins>
+
+        <!--<plugin>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-assertions-generator-maven-plugin</artifactId>
+            <version>2.1.0</version>
+            <configuration>
+                <packages>
+                    <param>your.first.package</param>
+                    <param>your.second.package</param>
+                </packages>
+                <classes>
+                    <param>your.third.package.YourClass</param>
+                </classes>
+            </configuration>
+        </plugin>-->
+        
+
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -116,6 +149,14 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.0</version>
+                    <configuration>
+                        <excludes>
+                            <exclude>**/*Config/*</exclude>
+                            <exclude>**/App.*</exclude>
+                            <exclude>**/*Security/**</exclude>
+                            <exclude>**/*Util/*</exclude>
+                        </excludes>
+                    </configuration>
                 <executions>
                     <execution>
                         <id>default-prepare-agent</id>

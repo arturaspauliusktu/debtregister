@@ -8,6 +8,9 @@ public class AuthResponse {
         this.accessToken = accessToken;
     }
 
+    public AuthResponse() {
+    }
+
     public String getAccessToken() {
         return accessToken;
     }

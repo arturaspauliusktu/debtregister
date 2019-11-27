@@ -68,25 +68,6 @@ public class User {
         this.role = role;
     }
 
-    public User(long id,@NotNull @Size(max = 100) String username,
-    @NotNull @Size(max = 100) String password, Date registration) {
-        this.id = id;
-        this.username = username;
-        this.password = password;
-        this.registration = registration;
-    }
-
-    public User(long id, @NotNull @Size(max = 100) String username, @Email String email,
-    @NotNull @Size(max = 100) String password, Date registration, String imageUrl, String providerId) {
-        this.id = id;
-        this.username = username;
-        this.email = email;
-        this.password = password;
-        this.registration = registration;
-        this.imageUrl = imageUrl;
-        this.providerId = providerId;
-    }
-
     public User(long id, @NotNull @Size(max = 100) String username, @Email String email,
     @NotNull @Size(max = 100) String password, Date registration, String imageUrl, String providerId, UserRole role) {
         this.id = id;

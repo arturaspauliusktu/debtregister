@@ -21,6 +21,7 @@ import java.util.Optional;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.apache.http.HttpHeaders;
+import org.assertj.core.api.EnumerableAssert;
 import org.springframework.security.core.Authentication;
 import org.junit.After;
 import org.junit.Test;
@@ -52,7 +53,7 @@ import debtreg.Security.TokenProvider;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = App.class)
-@AutoConfigureMockMvc 
+@AutoConfigureMockMvc
 @ContextConfiguration
 @WebAppConfiguration
 public class MessageControllerTest {
@@ -79,14 +80,13 @@ public class MessageControllerTest {
     protected MessageRepository messageRepository;
 
     @After
-    public void resetDb(){
+    public void resetDb() {
         messageRepository.deleteAll();
         userRepository.deleteAll();
     }
 
     @Test
-    public void givenMessages_thenGetMessages()
-    throws Exception{
+    public void givenMessages_thenGetMessages() throws Exception {
         String name1 = "Jonas";
         String email1 = "jonas@mail.com";
         String name2 = "Petras";
@@ -100,20 +100,16 @@ public class MessageControllerTest {
         Message message1 = createTestMessage(user1, user2, user1.getId());
         Message message2 = createTestMessage(user1, user2, user1.getId());
 
-        mvc.perform(get("/messages/")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
-        .andDo(print())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(2))))
-        .andExpect(jsonPath("$[0].id", is((int)message1.getId())))
-        .andExpect(jsonPath("$[1].id", is((int)message2.getId())))
-        .andExpect(status().isOk());
+        mvc.perform(get("/messages/").contentType(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION,
+                "Bearer " + jonasToken)).andDo(print())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(2))))
+                .andExpect(jsonPath("$[0].id", is((int) message1.getId())))
+                .andExpect(jsonPath("$[1].id", is((int) message2.getId()))).andExpect(status().isOk());
     }
 
     @Test
-    public void givenMessages_thenGetMessage()
-    throws Exception{
+    public void givenMessages_thenGetMessage() throws Exception {
         String name1 = "Jonas";
         String email1 = "jonas@mail.com";
         String name2 = "Petras";
@@ -126,18 +122,14 @@ public class MessageControllerTest {
 
         Message message1 = createTestMessage(user1, user2, user1.getId());
 
-        mvc.perform(get("/message/"+message1.getId())
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
-        .andDo(print())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.id", is((int)message1.getId())))
-        .andExpect(status().isOk());
+        mvc.perform(get("/message/" + message1.getId()).contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken)).andDo(print())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id", is((int) message1.getId()))).andExpect(status().isOk());
     }
 
     @Test(expected = Exception.class)
-    public void givenMessages_whenGetMessage_thenMessageNotFound()
-    throws Exception{
+    public void givenMessages_whenGetMessage_thenMessageNotFound() throws Exception {
         String name1 = "Jonas";
         String email1 = "jonas@mail.com";
         String name2 = "Petras";
@@ -150,100 +142,14 @@ public class MessageControllerTest {
 
         Message message1 = createTestMessage(user1, user2, user1.getId());
 
-        mvc.perform(get("/message/"+241241)
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
-        .andDo(print())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.id", is((int)message1.getId())))
-        .andExpect(status().isOk());
+        mvc.perform(get("/message/" + 241241).contentType(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION,
+                "Bearer " + jonasToken)).andDo(print())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id", is((int) message1.getId()))).andExpect(status().isOk());
     }
 
     @Test
-    public void givenMessages_thenGetMessageByGiverId()
-    throws Exception{
-        String name1 = "Jonas";
-        String email1 = "jonas@mail.com";
-        String name2 = "Petras";
-        String email2 = "petras@mail.com";
-        String jonasToken = createTestUser(name1, email1);
-        createTestUser(name2, email2);
-
-        User user1 = userRepository.findByEmail(email1).get();
-        User user2 = userRepository.findByEmail(email2).get();
-
-        Message message1 = createTestMessage(user1, user2, user1.getId());
-        Message message2 = createTestMessage(user1, user2, user1.getId());
-
-        mvc.perform(get("/giver/"+user2.getId()+"/messages")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
-        .andDo(print())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(2))))
-        .andExpect(jsonPath("$.content[0].id", is((int)message1.getId())))
-        .andExpect(jsonPath("$.content[1].id", is((int)message2.getId())))
-        .andExpect(status().isOk());
-    }
-
-    @Test
-    public void givenMessages_thenGetMessageByCurrentGiverId()
-    throws Exception{
-        String name1 = "Jonas";
-        String email1 = "jonas@mail.com";
-        String name2 = "Petras";
-        String email2 = "petras@mail.com";
-        String jonasToken = createTestUser(name1, email1);
-        String petrasToken = createTestUser(name2, email2);
-
-        User user1 = userRepository.findByEmail(email1).get();
-        User user2 = userRepository.findByEmail(email2).get();
-
-        Message message1 = createTestMessage(user1, user2, user1.getId());
-        Message message2 = createTestMessage(user1, user2, user1.getId());
-
-        mvc.perform(get("/giver/me/messages")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken))
-        .andDo(print())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(2))))
-        .andExpect(jsonPath("$.content[0].id", is((int)message1.getId())))
-        .andExpect(jsonPath("$.content[1].id", is((int)message2.getId())))
-        .andExpect(status().isOk());
-    }
-
-    @Test
-    public void givenMessages_thenGetMessageByCurrentGiverIdAndMessageId()
-    throws Exception{
-        String name1 = "Jonas";
-        String email1 = "jonas@mail.com";
-        String name2 = "Petras";
-        String email2 = "petras@mail.com";
-        String jonasToken = createTestUser(name1, email1);
-        String petrasToken = createTestUser(name2, email2);
-
-        User user1 = userRepository.findByEmail(email1).get();
-        User user2 = userRepository.findByEmail(email2).get();
-
-        Message message1 = createTestMessage(user1, user2, user1.getId());
-        //Message message2 = createTestMessage(user1, user2, user1.getId());
-
-        mvc.perform(get("/giver/me/messages/"+message1.getId())
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken))
-        .andDo(print())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        //.andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(2))))
-        .andExpect(jsonPath("$.id", is((int)message1.getId())))
-        //.andExpect(jsonPath("$.content[1].id", is((int)message2.getId())))
-        .andExpect(status().isOk());
-    }
-
-    
-    @Test
-    public void givenMessages_thenGetMessageByGetterId()
-    throws Exception{
+    public void givenMessages_thenGetMessageByGiverId() throws Exception {
         String name1 = "Jonas";
         String email1 = "jonas@mail.com";
         String name2 = "Petras";
@@ -257,20 +163,16 @@ public class MessageControllerTest {
         Message message1 = createTestMessage(user1, user2, user1.getId());
         Message message2 = createTestMessage(user1, user2, user1.getId());
 
-        mvc.perform(get("/getter/"+user1.getId()+"/messages")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
-        .andDo(print())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(2))))
-        .andExpect(jsonPath("$.content[0].id", is((int)message1.getId())))
-        .andExpect(jsonPath("$.content[1].id", is((int)message2.getId())))
-        .andExpect(status().isOk());
+        mvc.perform(get("/giver/" + user2.getId() + "/messages").contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken)).andDo(print())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(2))))
+                .andExpect(jsonPath("$.content[0].id", is((int) message1.getId())))
+                .andExpect(jsonPath("$.content[1].id", is((int) message2.getId()))).andExpect(status().isOk());
     }
 
     @Test
-    public void givenMessages_thenGetMessageByCurrentGetterId()
-    throws Exception{
+    public void givenMessages_thenGetMessageByCurrentGiverId() throws Exception {
         String name1 = "Jonas";
         String email1 = "jonas@mail.com";
         String name2 = "Petras";
@@ -284,20 +186,16 @@ public class MessageControllerTest {
         Message message1 = createTestMessage(user1, user2, user1.getId());
         Message message2 = createTestMessage(user1, user2, user1.getId());
 
-        mvc.perform(get("/getter/me/messages")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
-        .andDo(print())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(2))))
-        .andExpect(jsonPath("$.content[0].id", is((int)message1.getId())))
-        .andExpect(jsonPath("$.content[1].id", is((int)message2.getId())))
-        .andExpect(status().isOk());
+        mvc.perform(get("/giver/me/messages").contentType(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION,
+                "Bearer " + petrasToken)).andDo(print())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(2))))
+                .andExpect(jsonPath("$.content[0].id", is((int) message1.getId())))
+                .andExpect(jsonPath("$.content[1].id", is((int) message2.getId()))).andExpect(status().isOk());
     }
 
     @Test
-    public void givenMessages_thenGetMessageByCurrentGetterIdAndMessageId()
-    throws Exception{
+    public void givenMessages_thenGetMessageByCurrentGiverIdAndMessageId() throws Exception {
         String name1 = "Jonas";
         String email1 = "jonas@mail.com";
         String name2 = "Petras";
@@ -309,22 +207,89 @@ public class MessageControllerTest {
         User user2 = userRepository.findByEmail(email2).get();
 
         Message message1 = createTestMessage(user1, user2, user1.getId());
-        //Message message2 = createTestMessage(user1, user2, user1.getId());
+        // Message message2 = createTestMessage(user1, user2, user1.getId());
 
-        mvc.perform(get("/getter/me/messages/"+message1.getId())
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
-        .andDo(print())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        //.andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(2))))
-        .andExpect(jsonPath("$.id", is((int)message1.getId())))
-        //.andExpect(jsonPath("$.content[1].id", is((int)message2.getId())))
-        .andExpect(status().isOk());
+        mvc.perform(get("/giver/me/messages/" + message1.getId()).contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken)).andDo(print())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                // .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(2))))
+                .andExpect(jsonPath("$.id", is((int) message1.getId())))
+                // .andExpect(jsonPath("$.content[1].id", is((int)message2.getId())))
+                .andExpect(status().isOk());
     }
 
     @Test
-    public void whenValid_thenAddMessageToGiver()
-    throws Exception{
+    public void givenMessages_thenGetMessageByGetterId() throws Exception {
+        String name1 = "Jonas";
+        String email1 = "jonas@mail.com";
+        String name2 = "Petras";
+        String email2 = "petras@mail.com";
+        String jonasToken = createTestUser(name1, email1);
+        createTestUser(name2, email2);
+
+        User user1 = userRepository.findByEmail(email1).get();
+        User user2 = userRepository.findByEmail(email2).get();
+
+        Message message1 = createTestMessage(user1, user2, user1.getId());
+        Message message2 = createTestMessage(user1, user2, user1.getId());
+
+        mvc.perform(get("/getter/" + user1.getId() + "/messages").contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken)).andDo(print())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(2))))
+                .andExpect(jsonPath("$.content[0].id", is((int) message1.getId())))
+                .andExpect(jsonPath("$.content[1].id", is((int) message2.getId()))).andExpect(status().isOk());
+    }
+
+    @Test
+    public void givenMessages_thenGetMessageByCurrentGetterId() throws Exception {
+        String name1 = "Jonas";
+        String email1 = "jonas@mail.com";
+        String name2 = "Petras";
+        String email2 = "petras@mail.com";
+        String jonasToken = createTestUser(name1, email1);
+        String petrasToken = createTestUser(name2, email2);
+
+        User user1 = userRepository.findByEmail(email1).get();
+        User user2 = userRepository.findByEmail(email2).get();
+
+        Message message1 = createTestMessage(user1, user2, user1.getId());
+        Message message2 = createTestMessage(user1, user2, user1.getId());
+
+        mvc.perform(get("/getter/me/messages").contentType(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION,
+                "Bearer " + jonasToken)).andDo(print())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(2))))
+                .andExpect(jsonPath("$.content[0].id", is((int) message1.getId())))
+                .andExpect(jsonPath("$.content[1].id", is((int) message2.getId()))).andExpect(status().isOk());
+    }
+
+    @Test
+    public void givenMessages_thenGetMessageByCurrentGetterIdAndMessageId() throws Exception {
+        String name1 = "Jonas";
+        String email1 = "jonas@mail.com";
+        String name2 = "Petras";
+        String email2 = "petras@mail.com";
+        String jonasToken = createTestUser(name1, email1);
+        String petrasToken = createTestUser(name2, email2);
+
+        User user1 = userRepository.findByEmail(email1).get();
+        User user2 = userRepository.findByEmail(email2).get();
+
+        Message message1 = createTestMessage(user1, user2, user1.getId());
+        // Message message2 = createTestMessage(user1, user2, user1.getId());
+
+        mvc.perform(get("/getter/me/messages/" + message1.getId()).contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken)).andDo(print())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                // .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(2))))
+                .andExpect(jsonPath("$.id", is((int) message1.getId())))
+                // .andExpect(jsonPath("$.content[1].id", is((int)message2.getId())))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void whenValid_thenAddMessageToGiver() throws Exception {
         String name1 = "Jonas";
         String email1 = "jonas@mail.com";
         String name2 = "Petras";
@@ -337,24 +302,21 @@ public class MessageControllerTest {
 
         Message message = new Message(0, "text1", new Date(), user1, user2, user1.getId());
 
-        MvcResult a = mvc.perform(post("/giver/"+user1.getId()+"/message/")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken)
-        .content(JsonUtil.toJson(message)))
-        .andDo(print())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(status().isOk()).andReturn();
+        MvcResult a = mvc
+                .perform(post("/giver/" + user1.getId() + "/message/").contentType(MediaType.APPLICATION_JSON)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken).content(JsonUtil.toJson(message)))
+                .andDo(print()).andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk()).andReturn();
 
         ObjectMapper objectMapper = new ObjectMapper();
         Message responcemessage = objectMapper.readValue(a.getResponse().getContentAsString(), Message.class);
-        
+
         List<Message> messages = messageRepository.findAll();
         assertThat(messages).extracting("id").contains(responcemessage.getId());
     }
 
     @Test
-    public void whenValid_thenAddMessageToGiver_thenUserNotFound()
-    throws Exception{
+    public void whenValid_thenAddMessageToGiver_thenUserNotFound() throws Exception {
         String name1 = "Jonas";
         String email1 = "jonas@mail.com";
         String name2 = "Petras";
@@ -367,15 +329,14 @@ public class MessageControllerTest {
 
         Message message = new Message(0, "text1", new Date(), user1, user2, user1.getId());
 
-        MvcResult result = mvc.perform(post("/giver/"+151616+"/message/")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken)
-        .content(JsonUtil.toJson(message)))
-        .andDo(print())
-        .andReturn();
+        MvcResult result = mvc
+                .perform(post("/giver/" + 151616 + "/message/").contentType(MediaType.APPLICATION_JSON)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken).content(JsonUtil.toJson(message)))
+                .andDo(print()).andReturn();
 
-        Optional<ResourceNotFoundException> e = Optional.ofNullable((ResourceNotFoundException) result.getResolvedException());
-        assertThat(e).isNotEmpty();
+        Optional<ResourceNotFoundException> e = Optional
+                .ofNullable((ResourceNotFoundException) result.getResolvedException());
+        ((EnumerableAssert<?, Message>) assertThat(e)).isNotEmpty();
         assertThat(e.get()).isInstanceOf(ResourceNotFoundException.class);
     }
 
@@ -462,7 +423,7 @@ public class MessageControllerTest {
         .andReturn();
 
         Optional<ResourceNotFoundException> e = Optional.ofNullable((ResourceNotFoundException) result.getResolvedException());
-        assertThat(e).isNotEmpty();
+        ((EnumerableAssert<?, Message>) assertThat(e)).isNotEmpty();
         assertThat(e.get()).isInstanceOf(ResourceNotFoundException.class);
     }
 
@@ -520,7 +481,7 @@ public class MessageControllerTest {
         .andReturn();
         
         Optional<Message> message = messageRepository.findById(message1.getId());
-        assertThat(message).isEmpty();
+        ((List<Message>) assertThat(message)).isEmpty();
     }
 
     @Test
@@ -532,10 +493,9 @@ public class MessageControllerTest {
         createTestUser(name1, email1);
         String petrasToken = createTestUser(name2, email2);
 
-        User user1 = userRepository.findByEmail(email1).get();
         User user2 = userRepository.findByEmail(email2).get();
 
-        Message message1 = createTestMessage(user1, user2, user1.getId());
+        Message message1 = createTestMessage(user2, user2, user2.getId());
 
         
         MvcResult result = mvc.perform(delete("/message/"+1651515)
@@ -545,7 +505,7 @@ public class MessageControllerTest {
         .andReturn();
         
         Optional<ResourceNotFoundException> e = Optional.ofNullable((ResourceNotFoundException) result.getResolvedException());
-        assertThat(e).isNotEmpty();
+        ((EnumerableAssert<?, Message>) assertThat(e)).isNotEmpty();
         assertThat(e.get()).isInstanceOf(ResourceNotFoundException.class);
     }
 
@@ -573,7 +533,7 @@ public class MessageControllerTest {
         .andReturn();
         
         Optional<Message> message = messageRepository.findById(message1.getId());
-        assertThat(message).isEmpty();
+        ((List<Message>) assertThat(message)).isEmpty();
     }
 
     @Test
@@ -599,7 +559,7 @@ public class MessageControllerTest {
         .andReturn();
         
         Optional<ResourceNotFoundException> e = Optional.ofNullable((ResourceNotFoundException) result.getResolvedException());
-        assertThat(e).isNotEmpty();
+        ((EnumerableAssert<?, Message>) assertThat(e)).isNotEmpty();
         assertThat(e.get()).isInstanceOf(ResourceNotFoundException.class);
 
     }
@@ -628,7 +588,7 @@ public class MessageControllerTest {
         .andReturn();
         
         Optional<Message> message = messageRepository.findById(message1.getId());
-        assertThat(message).isEmpty();
+        ((List<Message>) assertThat(message)).isEmpty();
     }
 
     @Test
@@ -654,7 +614,7 @@ public class MessageControllerTest {
         .andReturn();
         
         Optional<ResourceNotFoundException> e = Optional.ofNullable((ResourceNotFoundException) result.getResolvedException());
-        assertThat(e).isNotEmpty();
+        ((EnumerableAssert<?, Message>) assertThat(e)).isNotEmpty();
         assertThat(e.get()).isInstanceOf(ResourceNotFoundException.class);
     }
 
@@ -739,7 +699,7 @@ public class MessageControllerTest {
         Optional<ResourceNotFoundException> e 
         = Optional.ofNullable((ResourceNotFoundException) 
         result.getResolvedException());
-        assertThat(e).isNotEmpty();
+        ((EnumerableAssert<?, Message>) assertThat(e)).isNotEmpty();
         assertThat(e.get())
         .isInstanceOf(ResourceNotFoundException.class);
 
@@ -827,7 +787,7 @@ public class MessageControllerTest {
         Optional<ResourceNotFoundException> e 
         = Optional.ofNullable((ResourceNotFoundException) 
         result.getResolvedException());
-        assertThat(e).isNotEmpty();
+        ((EnumerableAssert<?, Message>) assertThat(e)).isNotEmpty();
         assertThat(e.get())
         .isInstanceOf(ResourceNotFoundException.class);
     }
@@ -856,7 +816,7 @@ public class MessageControllerTest {
         Optional<ResourceNotFoundException> e 
         = Optional.ofNullable((ResourceNotFoundException) 
         result.getResolvedException());
-        assertThat(e).isNotEmpty();
+        ((EnumerableAssert<?, Message>) assertThat(e)).isNotEmpty();
         assertThat(e.get())
         .isInstanceOf(ResourceNotFoundException.class);
     }
@@ -943,7 +903,7 @@ public class MessageControllerTest {
         Optional<ResourceNotFoundException> e 
         = Optional.ofNullable((ResourceNotFoundException) 
         result.getResolvedException());
-        assertThat(e).isNotEmpty();
+        ((EnumerableAssert<?, Message>) assertThat(e)).isNotEmpty();
         assertThat(e.get())
         .isInstanceOf(ResourceNotFoundException.class);
     }
