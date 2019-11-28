@@ -21,6 +21,7 @@ import java.util.Optional;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.apache.http.HttpHeaders;
+import org.assertj.core.api.EnumerableAssert;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -58,7 +59,7 @@ import debtreg.Security.TokenProvider;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = App.class)
-@AutoConfigureMockMvc 
+@AutoConfigureMockMvc
 @ContextConfiguration
 @WebAppConfiguration
 public class DebtControllerTest {
@@ -84,7 +85,7 @@ public class DebtControllerTest {
     private DebtRepository debtRepository;
 
     @After
-    public void resetDb(){
+    public void resetDb() {
         debtRepository.deleteAll();
         userRepository.deleteAll();
     }
@@ -104,15 +105,12 @@ public class DebtControllerTest {
         Debt debt1 = createTestDebt(user1, user2);
         Debt debt2 = createTestDebt(user1, user2);
 
-
-        mvc.perform(get("/debts").contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
-        .andDo(print())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(2))))
-        .andExpect(jsonPath("$[0].id", is((int)debt1.getId())))
-        .andExpect(jsonPath("$[1].id", is((int)debt2.getId())))
-        .andExpect(status().isOk());
+        mvc.perform(get("/debts").contentType(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION,
+                "Bearer " + jonasToken)).andDo(print())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(2))))
+                .andExpect(jsonPath("$[0].id", is((int) debt1.getId())))
+                .andExpect(jsonPath("$[1].id", is((int) debt2.getId()))).andExpect(status().isOk());
     }
 
     @Test
@@ -129,12 +127,10 @@ public class DebtControllerTest {
 
         Debt debt1 = createTestDebt(user1, user2);
 
-        mvc.perform(get("/debt/"+(int)debt1.getId()).contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
-        .andDo(print())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.id", is((int)debt1.getId())))
-        .andExpect(status().isOk());
+        mvc.perform(get("/debt/" + (int) debt1.getId()).contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken)).andDo(print())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id", is((int) debt1.getId()))).andExpect(status().isOk());
     }
 
     @Test(expected = Exception.class)
@@ -151,12 +147,10 @@ public class DebtControllerTest {
 
         Debt debt1 = createTestDebt(user1, user2);
 
-        mvc.perform(get("/debt/48941656151").contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
-        .andDo(print())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.id", is((int)debt1.getId())))
-        .andExpect(status().isOk());
+        mvc.perform(get("/debt/48941656151").contentType(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION,
+                "Bearer " + jonasToken)).andDo(print())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id", is((int) debt1.getId()))).andExpect(status().isOk());
     }
 
     @Test
@@ -174,14 +168,12 @@ public class DebtControllerTest {
         Debt debt1 = createTestDebt(user1, user2);
         Debt debt2 = createTestDebt(user1, user2);
 
-        mvc.perform(get("/user/"+(int)user1.getId()+"/debts").contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
-        .andDo(print())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(2))))
-        .andExpect(jsonPath("$.content.[0].id", is((int)debt1.getId())))
-        .andExpect(jsonPath("$.content.[1].id", is((int)debt2.getId())))
-        .andExpect(status().isOk());
+        mvc.perform(get("/user/" + (int) user1.getId() + "/debts").contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken)).andDo(print())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(2))))
+                .andExpect(jsonPath("$.content.[0].id", is((int) debt1.getId())))
+                .andExpect(jsonPath("$.content.[1].id", is((int) debt2.getId()))).andExpect(status().isOk());
     }
 
     @Test
@@ -199,14 +191,12 @@ public class DebtControllerTest {
         Debt debt1 = createTestDebt(user1, user2);
         Debt debt2 = createTestDebt(user1, user2);
 
-        mvc.perform(get("/user/me/debts").contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
-        .andDo(print())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(2))))
-        .andExpect(jsonPath("$.content.[0].id", is((int)debt1.getId())))
-        .andExpect(jsonPath("$.content.[1].id", is((int)debt2.getId())))
-        .andExpect(status().isOk());
+        mvc.perform(get("/user/me/debts").contentType(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION,
+                "Bearer " + jonasToken)).andDo(print())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(2))))
+                .andExpect(jsonPath("$.content.[0].id", is((int) debt1.getId())))
+                .andExpect(jsonPath("$.content.[1].id", is((int) debt2.getId()))).andExpect(status().isOk());
     }
 
     @Test
@@ -224,14 +214,12 @@ public class DebtControllerTest {
         Debt debt1 = createTestDebt(user1, user2);
         Debt debt2 = createTestDebt(user1, user2);
 
-        mvc.perform(get("/user/"+(int)user2.getId()+"/assets").contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken))
-        .andDo(print())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(2))))
-        .andExpect(jsonPath("$.content.[0].id", is((int)debt1.getId())))
-        .andExpect(jsonPath("$.content.[1].id", is((int)debt2.getId())))
-        .andExpect(status().isOk());
+        mvc.perform(get("/user/" + (int) user2.getId() + "/assets").contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken)).andDo(print())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(2))))
+                .andExpect(jsonPath("$.content.[0].id", is((int) debt1.getId())))
+                .andExpect(jsonPath("$.content.[1].id", is((int) debt2.getId()))).andExpect(status().isOk());
     }
 
     @Test
@@ -249,14 +237,12 @@ public class DebtControllerTest {
         Debt debt1 = createTestDebt(user1, user2);
         Debt debt2 = createTestDebt(user1, user2);
 
-        mvc.perform(get("/user/me/assets").contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + petrasToken))
-        .andDo(print())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(2))))
-        .andExpect(jsonPath("$.content.[0].id", is((int)debt1.getId())))
-        .andExpect(jsonPath("$.content.[1].id", is((int)debt2.getId())))
-        .andExpect(status().isOk());
+        mvc.perform(get("/user/me/assets").contentType(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION,
+                "Bearer " + petrasToken)).andDo(print())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(2))))
+                .andExpect(jsonPath("$.content.[0].id", is((int) debt1.getId())))
+                .andExpect(jsonPath("$.content.[1].id", is((int) debt2.getId()))).andExpect(status().isOk());
     }
 
     @Test
@@ -273,17 +259,14 @@ public class DebtControllerTest {
 
         Debt debt = new Debt(1, 100, user2, user1, null);
 
-        MvcResult a = mvc.perform(post("/giver/"+user1.getId()+"/debt")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken)
-        .content(JsonUtil.toJson(debt)))
-        .andDo(print())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andReturn();
+        MvcResult a = mvc
+                .perform(post("/giver/" + user1.getId() + "/debt").contentType(MediaType.APPLICATION_JSON)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken).content(JsonUtil.toJson(debt)))
+                .andDo(print()).andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)).andReturn();
 
         ObjectMapper objectMapper = new ObjectMapper();
         Debt responcedebt = objectMapper.readValue(a.getResponse().getContentAsString(), Debt.class);
-        
+
         List<Debt> debts = debtRepository.findAll();
         assertThat(debts).extracting("id").contains(responcedebt.getId());
     }
@@ -302,15 +285,14 @@ public class DebtControllerTest {
 
         Debt debt = new Debt(1, 100, user2, user1, null);
 
-        MvcResult a = mvc.perform(post("/giver/"+156156614+"/debt")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken)
-        .content(JsonUtil.toJson(debt)))
-        .andDo(print())
-        .andReturn();
+        MvcResult a = mvc
+                .perform(post("/giver/" + 156156614 + "/debt").contentType(MediaType.APPLICATION_JSON)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jonasToken).content(JsonUtil.toJson(debt)))
+                .andDo(print()).andReturn();
 
-        Optional<ResourceNotFoundException> e = Optional.ofNullable((ResourceNotFoundException) a.getResolvedException());
-        assertThat(e).isNotEmpty();
+        Optional<ResourceNotFoundException> e = Optional
+                .ofNullable((ResourceNotFoundException) a.getResolvedException());
+        ((EnumerableAssert<?, Debt>) assertThat(e)).isNotEmpty();
         assertThat(e.get()).isInstanceOf(ResourceNotFoundException.class);
     }
 
