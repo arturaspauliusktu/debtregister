@@ -63,14 +63,13 @@ public class UserController {
      public ResponseEntity<Object> removeUser(@PathVariable Long id){
           repo.deleteById(id);
           Optional<User> user = repo.findById(id);
-          //TODO: uncomment after test
-          // if(user.isPresent()){
-          //      URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-          //      .path("/{id}").buildAndExpand(user.get().getId()).toUri();
-          //      HttpHeaders responHeaders = new HttpHeaders();
-          //      responHeaders.setLocation(location);
-          //      return new ResponseEntity<Object>("Could Not delete user", responHeaders, HttpStatus.INTERNAL_SERVER_ERROR);
-          // }
+          if(user.isPresent()){
+               URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+               .path("/{id}").buildAndExpand(user.get().getId()).toUri();
+               HttpHeaders responHeaders = new HttpHeaders();
+               responHeaders.setLocation(location);
+               return new ResponseEntity<Object>("Could Not delete user", responHeaders, HttpStatus.INTERNAL_SERVER_ERROR);
+          }
           return new ResponseEntity<Object>(HttpStatus.NO_CONTENT);
      }
 
